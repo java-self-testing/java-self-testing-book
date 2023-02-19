@@ -1,0 +1,4 @@
+site_name: 《Java 研发自测》
+theme:
+  name: readthedocs
+  locale: zh
