@@ -1,12 +1,14 @@
 site_name: 《Java 研发自测》
+repo_url: https://github.com/java-self-testing/java-self-testing-book
+edit_uri: blob/draft/docs/
 nav:
   - Home: index.md
   - 第 1 章 研发自测基础: 01-self-testing-fundamentals.md
   - 第 2 章 代码评审: 02-code-review.md
-  - 第 3 章 单元测试基础: 03-unit-testing-fundamentals.md
-  - 第 4 章 测试替身：Mock、Spy、Stub: 04-testing-doubles.md
-  - 第 5 章 Spring 应用的测试: 05-testing-with-spring.md
-  - 第 6 章 RESTful API 测试: 06-api-testing.md
+#  - 第 3 章 单元测试基础: 03-unit-testing-fundamentals.md
+#  - 第 4 章 测试替身：Mock、Spy、Stub: 04-testing-doubles.md
+#  - 第 5 章 Spring 应用的测试: 05-testing-with-spring.md
+#  - 第 6 章 RESTful API 测试: 06-api-testing.md
 theme:
   name: readthedocs
 #  locale: zh
