@@ -8,6 +8,7 @@
 
 - [第 1 章 研发自测基础](./01-self-testing-fundamentals)
 - [第 2 章 代码评审](./02-code-review)
+- [第 3 章 单元测试基础](./03-unit-testing-fundamentals)
 
 待更新：
 
