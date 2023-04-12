@@ -1,6 +1,6 @@
 site_name: 《Java 研发自测》
 repo_url: https://github.com/java-self-testing/java-self-testing-book
-edit_uri: blob/docs/
+edit_uri: blob/main/docs/
 nav:
   - Home: index.md
   - 第 1 章 研发自测基础: 01-self-testing-fundamentals.md
