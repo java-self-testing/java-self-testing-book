@@ -5,3 +5,15 @@
 这本开源电子书整理了每个项目上都可能会用到的研发自测配置和技巧，以实用的角度说明如何进行单元测试、集成测试、API测试等内容，目前持续更新中，希望大家多提反馈，谢谢!
 
  访问地址：[https://java-self-testing.github.io/java-self-testing-book/](https://java-self-testing.github.io/java-self-testing-book/)
+
+## 站点
+
+站点通过 mkdocs 构建，参考相关网站获取信息：https://www.mkdocs.org/
+
+本地启动命令：
+
+> mkdocs serve
+
+站点发布命令：
+
+> mkdocs gh-deploy
