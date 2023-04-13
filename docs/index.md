@@ -1,4 +1,4 @@
-#        
+#《Java 研发自测》
 
 有很多图书介绍怎么做测试，但是很少有写给开发人员的软件测试图书。软件质量是决定一款软件是否能用的底线，软件质量低下，会造成开发人员不断地返工和修复 Bug，而这需要付出巨大的代价，侵占原本紧凑的开发时间。
 
@@ -9,10 +9,7 @@
 - [第 1 章 研发自测基础](./01-self-testing-fundamentals)
 - [第 2 章 代码评审](./02-code-review)
 - [第 3 章 单元测试基础](./03-unit-testing-fundamentals)
+- [第 4 章 测试替身](./04-testing-doubles)
+- [第 5 章 Spring 应用的测试](./05-testing-with-spring)
+- [第 6 章 RESTful API 测试](./06-api-testing)
 
-待更新：
-
-- 第 3 章 单元测试基础
-- 第 4 章 测试替身：Mock、Spy、Stub
-- 第 5 章 Spring 应用的测试
-- 第 6 章 RESTful API 测试
