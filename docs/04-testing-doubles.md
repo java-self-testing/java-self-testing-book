@@ -84,29 +84,27 @@ Mockito最常用的是mock、spy这两个方法，它的大部分工作都可以
 
 在下面的示例代码中，stubs模块有一个UserService对象，用来演示用户注册的逻辑。在register方法中，注册的过程分为对密码进行Hash计算、让数据持久化和发送邮件这三个步骤，事实上，实际场景下的注册方法比这更加复杂，这里做了大量简化，以便于我们将注意力集中在单元测试上。
 
-```
-public class UserService {
-private UserRepository userRepository;
-private EmailService emailService;
-private EncryptionService encryptionService;
+```java
+ppublic class UserService {
+    private UserRepository userRepository;
+    private EmailService emailService;
+    private EncryptionService encryptionService;
 
-public UserService(UserRepository userRepository, EmailService
-emailService, EncryptionService encryptionService) {
-this.userRepository = userRepository;
-this.emailService = emailService;
-this.encryptionService = encryptionService;
-}
+    public UserService(UserRepository userRepository, EmailService emailService, EncryptionService encryptionService) {
+        this.userRepository = userRepository;
+        this.emailService = emailService;
+        this.encryptionService = encryptionService;
+    }
 
-public void register(User user) {
-user.setPassword(encryptionService.sha256(user.getPassword()));
+    public void register(User user) {
+        user.setPassword(encryptionService.sha256(user.getPassword()));
 
-userRepository.saveUser(user);
+        userRepository.saveUser(user);
 
-String emailSubject = "Register Notification";
-String emailContent = "Register Account successful! your username is "
-+ user.getUsername();
-emailService.sendEmail(user.getEmail(), emailSubject, emailContent);
-}
+        String emailSubject = "Register Notification";
+        String emailContent = "Register Account successful! your username is " + user.getUsername();
+        emailService.sendEmail(user.getEmail(), emailSubject, emailContent);
+    }
 }
 ```
 
@@ -144,31 +142,28 @@ Buddy作为代理技术，根据暴露出来的API可知，只需要传入一个
 在下面的测试代码中，会使用Mockito 创建我们需要的被依赖对象：
 
 ```java
-
 public class UserServiceTest {
 
-@Test
-public void should_register() {
-// 使用 Mockito 模拟三个对象
-UserRepository mockedUserRepository = mock(UserRepository.class);
-EmailService mockedEmailService = mock(EmailService.class);
-EncryptionService mockedEncryptionService =
-mock(EncryptionService.class);
-UserService userService = new UserService(mockedUserRepository,
-mockedEmailService, mockedEncryptionService);
+    @Test
+    public void should_register() {
+        // 使用 Mockito 模拟三个对象
+        UserRepository mockedUserRepository = mock(UserRepository.class);
+        EmailService mockedEmailService = mock(EmailService.class);
+        EncryptionService mockedEncryptionService = mock(EncryptionService.class);
+        UserService userService = new UserService(mockedUserRepository, mockedEmailService, mockedEncryptionService);
 
-// Given
-User user = new User("admin@test.com", "admin", "xxx");
+        // Given
+        User user = new User("admin@test.com", "admin", "xxx");
 
-// When
-userService.register(user);
+        // When
+        userService.register(user);
 
-// Then
-verify(mockedEmailService).sendEmail(
-eq("admin@test.com"),
-eq("Register Notification"),
-eq("Register Account successful! your username is admin"));
-}
+        // Then
+        verify(mockedEmailService).sendEmail(
+                eq("admin@test.com"),
+                eq("Register Notification"),
+                eq("Register Account successful! your username is admin"));
+    }
 }
 ```
 
@@ -181,13 +176,11 @@ Mockito，为了让内容简短，我们一般直接导入静态方法。Mockito
 
 很多文章认为这种测试用例的风格是行为驱动开发（BDD）的一部分，很多E2E测试框架将其作为默认的代码组织形式，因此被广泛推荐使用。其基本思想是将编写场景（或测试）分解为以下三个部分：
 
--   Given
-    部分描述在开始指定的行为之前程序的状态，可以将其视为测试的前提条件。
+-   Given 部分描述在开始指定的行为之前程序的状态，可以将其视为测试的前提条件。
 
 -   When 部分触发被测试对象的调用。
 
--   Then
-    部分检查和断言指定行为所产生的变化。这种变化可以是方法调用成功的返回值、抛出的异常、下游的方法被调用等。
+-   Then 部分检查和断言指定行为所产生的变化。这种变化可以是方法调用成功的返回值、抛出的异常、下游的方法被调用等。
 
 Mockito也提供了一个门面类BDDMockito来让开发者使用相关API编写BDD风格的测试。在单元测试中，BDD不是必选项，但我们依然可以模仿与之类似的风格。
 
@@ -198,12 +191,12 @@ sendEmail方法的参数是否符合我们的预期。这里可以使用verify�
 
 ```java
 verify(mockedEmailService).sendEmail(
-eq("admin@test.com"),
-eq("Register Notification"),
-eq("Register Account successful! your username is admin"));
+                eq("admin@test.com"),
+                eq("Register Notification"),
+                eq("Register Account successful! your username is admin"));
+```
 
 verify(mockedEmailService) 等价于 verify(mockedEmailService, 1)。
-```
 
 在上述代码中，verify(mockedEmailService)
 等价于verify(mockedEmailService, 1)
@@ -228,7 +221,7 @@ saveUser方法的内容是否按照我们的预期执行。因此我们不仅需
 
 在这种情况下，可以通过ArgumentCaptor构建一个Argument对象，并捕捉参数，再用于断言。示例代码如下：
 
-```
+```java
 ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
 verify(mockedUserRepository).saveUser(argument.capture());
 
@@ -257,7 +250,7 @@ type)
 
 ```
 when(mockedEncryptionService.sha256(any()))
-.thenReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
+  .thenReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
 ```
 
 when方法可接收一个模拟对象或间谍对象（后面会讨论）作为参数，随后会调用以下几个方法预置行为。
@@ -291,7 +284,7 @@ Mockito 还有一些隐藏的规则，若想避免掉入这些陷阱则需要了
 这种语法设置预期行为，这是因为when方法需要接收一个被模拟方法的返回值作为参数，如果被模拟方法没有返回值，可以使用do(...).when(...)
 语法，取得的效果类似。在下面这种情况下，把预置的行为写在前面即可。
 
-```
+```java
 doThrow(new RuntimeException()).when(mockedList).clear();
 
 // 下面的调用会触发异常抛出
@@ -317,15 +310,14 @@ mockedList.clear();
 
 还记得前面提到的Given..When...Then的测试风格吗？
 
-在Mockito
-默认API提供的方法中，when方法被用于定义模拟对象的预置行为，但这样一来就与BDD的风格不一致了，在可读性上会受到一定的影响。
+在Mockito 默认API提供的方法中，when方法被用于定义模拟对象的预置行为，但这样一来就与BDD的风格不一致了，在可读性上会受到一定的影响。
 
 Mockito为了鼓励使用BDD测试风格，也提供了一套API，在这套API里，使用BDD-Mockito类中的方法代替了Mockito类（BDDMock为Mockito的方法别名），可以模仿BDD
 的风格进行测试。它的用法很简单，将前面的when修改为given，将then替换为will即可。示例代码如下：
 
-```
+```java
 given(mockedEncryptionService.sha256(any()))
-.willReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
+        .willReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
 ```
 
 在团队达成共识的情况下，利用上述方法别名可以提高测试的自解释性。
@@ -342,7 +334,7 @@ Mockito需要借助参数匹配器来绑定预置行为，参数匹配器也会�
 前面的例子中使用了any参数匹配器，其用途是让任何参数都可匹配到。如果使用any
 参数匹配器，下面的代码执行后会打印true。
 
-```
+```java
 List mockedList = mock(List.class);
 when(mockedList.add(any())).thenReturn(true);
 
@@ -351,7 +343,7 @@ System.out.println(mockedList.add(null));
 
 如果想要得到更为细致的类型匹配，可以使用any(Class)、anyxxx等关于类型的参数匹配器。因为没有匹配上，下面的代码会打印出false，这是Mockito默认的行为导致的。
 
-```
+```java
 List mockedList = mock(List.class);
 // 等价于 any(Boolean.class);
 when(mockedList.add(anyBoolean())).thenReturn(true);
@@ -363,7 +355,7 @@ System.out.println(mockedList.add(null));
 
 使用下面这段代码可以体验不同的匹配方式带来的不同效果。注意，理解在不同情况下对null值的处理方式，可以避免很多未知的问题。
 
-```
+```java
 List mockedList = mock(List.class);
 // 等价 isNull()
 when(mockedList.add(eq(null))).thenReturn(false);
@@ -390,31 +382,30 @@ assertThat(mockedList.get(0), new IsNull());
 
 例如，对于EncryptionService，我们给sha256方法一个真实的实现：
 
-```
+```java
 public String sha256(String text) {
-MessageDigest md = null;
-try {
-md = MessageDigest.getInstance("SHA-256");
-return new BigInteger(1, md.digest(text.getBytes())).toString(16);
-} catch (NoSuchAlgorithmException e) {
-e.printStackTrace();
-}
-return null;
+    MessageDigest md = null;
+    try {
+        md = MessageDigest.getInstance("SHA-256");
+        return new BigInteger(1, md.digest(text.getBytes())).toString(16);
+    } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+    }
+    return null;
 }
 ```
 
 在register的单元测试中，修改EncryptionService类的mock方法为spy方法，并删除mockedEncryptionService的Given操作。
 
-```
-EncryptionService mockedEncryptionService = spy(new
-EncryptionService());
+```java
+EncryptionService mockedEncryptionService = spy(new EncryptionService());
 ```
 
 重新运行测试，可以得到与使用mock方法同样的测试结果。使用spy方法可以大大减少测试样板代码，避免重复工作。使用spy方法就像是一个间谍侵人需要注入的对象观察下游对象的行为，并记录一切，然后在测试完成后汇报他看到的信息一样。
 
 应用了spy方法的对象也可以被验证，在下面的示例中，仍然可以验证register方法确实调用了sha256方法。
 
-```
+```java
 verify(mockedEncryptionService).sha256(eq("xxx"));
 ```
 
@@ -425,7 +416,7 @@ verify(mockedEncryptionService).sha256(eq("xxx"));
 
 使用注解只需要修改需要被模拟的三个对象，并使用注解代替手动创建即可：
 
-```
+```java
 @Mock
 UserRepository mockedUserRepository;
 @Mock
@@ -438,7 +429,7 @@ EncryptionService mockedEncryptionService = new EncryptionService();
 
 我们可在测试类上增加下面的注解：
 
-```
+```java
 @RunWith(MockitoJUnitRunner.class)
 ```
 
@@ -450,45 +441,42 @@ EncryptionService mockedEncryptionService = new EncryptionService();
 
 使用注解的完整测试代码如下，也可以在GitHub上的示例代码仓库中找到此代码段。
 
-```
-
+```java
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceAnnotationTest {
 
-@Mock
-UserRepository mockedUserRepository;
-@Mock
-EmailService mockedEmailService;
-@Spy
-EncryptionService mockedEncryptionService = new EncryptionService();
+    @Mock
+    UserRepository mockedUserRepository;
+    @Mock
+    EmailService mockedEmailService;
+    @Spy
+    EncryptionService mockedEncryptionService = new EncryptionService();
 
-@InjectMocks
-UserService userService;
+    @InjectMocks
+    UserService userService;
 
-@Test
-public void should_register() {
-// Given
-User user = new User("admin@test.com", "admin", "xxx");
+    @Test
+    public void should_register() {
+        // Given
+        User user = new User("admin@test.com", "admin", "xxx");
 
-// When
-userService.register(user);
+        // When
+        userService.register(user);
 
-// Then
-verify(mockedEncryptionService).sha256(eq("xxx"));
-verify(mockedEmailService).sendEmail(
-eq("admin@test.com"),
-eq("Register Notification"),
-eq("Register Account successful! your username is admin"));
-//
-为了验证传入方法的参数是否正确，可以使用参数捕获器ArgumentCaptor来捕获传入方法的参数。
-ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-verify(mockedUserRepository).saveUser(argument.capture());
+        // Then
+        verify(mockedEncryptionService).sha256(eq("xxx"));
+        verify(mockedEmailService).sendEmail(
+                eq("admin@test.com"),
+                eq("Register Notification"),
+                eq("Register Account successful! your username is admin"));
+        // 为了验证传入方法的参数是否正确，可以使用参数捕获器ArgumentCaptor来捕获传入方法的参数。
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(mockedUserRepository).saveUser(argument.capture());
 
-assertEquals("admin@test.com", argument.getValue().getEmail());
-assertEquals("admin", argument.getValue().getUsername());
-assertEquals("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860",
-argument.getValue().getPassword());
-}
+        assertEquals("admin@test.com", argument.getValue().getEmail());
+        assertEquals("admin", argument.getValue().getUsername());
+        assertEquals("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860", argument.getValue().getPassword());
+    }
 }
 ```
 
@@ -508,22 +496,20 @@ argument.getValue().getPassword());
 
 使用Mockito时，可能会因为错误操作导致模拟不生效，为方便调试，可以打印出模拟对象的信息来探查原因，示例代码如下：
 
-```
-EncryptionService mockedEncryptionService =
-mock(EncryptionService.class);
+```java
+EncryptionService mockedEncryptionService = mock(EncryptionService.class);
 
 given(mockedEncryptionService.sha256(any()))
-.willReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
+  .willReturn("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860");
 
-MockingDetails mockingDetails =
-Mockito.mockingDetails(mockedEncryptionService);
+MockingDetails mockingDetails = Mockito.mockingDetails(mockedEncryptionService);
 System.out.println(mockingDetails.isMock());
 System.out.println(mockingDetails.getStubbings());
 ```
 
 执行上述代码即可输出当前对象的模拟状态。通过检查输出的结果，我们可以判断参数匹配是否工作：
 
-```
+```text
 true
 [encryptionService.sha256(<any>); stubbed with: [Returns:
 cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860]]
@@ -538,29 +524,27 @@ argThat
 
 校验 mockedEncryptionService 的 sha256方法的，示例代码如下：
 
-```
-verify(mockedEncryptionService).sha256(argThat(new
-ArgumentMatcher<String>() {
-@Override
-public boolean matches(String argument) {
-return argument.equals("xxx");
-}
+```java
+verify(mockedEncryptionService).sha256(argThat(new ArgumentMatcher<String>() {
+    @Override
+    public boolean matches(String argument) {
+        return argument.equals("xxx");
+    }
 }));
 ```
 
 改写成 Lambda 后变得非常简洁：
 
-```
+```java
 verify(mockedEncryptionService).sha256(argThat(argument -> {
-return argument.equals("xxx");
+    return argument.equals("xxx");
 }));
 ```
 
 甚至可以写成一行：
 
-```
-verify(mockedEncryptionService).sha256(argThat(argument ->
-argument.equals("xxx")));
+```java
+verify(mockedEncryptionService).sha256(argThat(argument -> argument.equals("xxx")));
 ```
 
 上面的例子可能过于简单无法说明使用 Lambda
@@ -600,20 +584,19 @@ Mockito很强大，能帮我们完成大部分模拟工作，但是对于一些�
 
 ```java
 public class User {
-private String email;
-private String username;
-private String password;
-private Instant createAt;
+    private String email;
+    private String username;
+    private String password;
+    private Instant createAt;
 
-public User(String email, String username, String password, Instant
-createAt) {
-this.email = email;
-this.username = username;
-this.password = password;
-this.createAt = createAt;
-}
+    public User(String email, String username, String password, Instant createAt) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.createAt = createAt;
+    }
 
-...
+    ...
 }
 ```
 
@@ -636,22 +619,22 @@ powermock-api-mockito2对Mockito的版本有一定的兼容性要求，所以建
 
 ```xml
 <dependency>
-<groupId>org.powermock</groupId>
-<artifactId>powermock-module-junit4</artifactId>
-<version>2.0.2</version>
-<scope>test</scope>
+    <groupId>org.powermock</groupId>
+    <artifactId>powermock-module-junit4</artifactId>
+    <version>2.0.2</version>
+    <scope>test</scope>
 </dependency>
 <dependency>
-<groupId>org.powermock</groupId>
-<artifactId>powermock-api-mockito2</artifactId>
-<version>2.0.2</version>
-<scope>test</scope>
+    <groupId>org.powermock</groupId>
+    <artifactId>powermock-api-mockito2</artifactId>
+    <version>2.0.2</version>
+    <scope>test</scope>
 </dependency>
 ```
 
 然后，使用PowerMockRunner代替Mockito的Runner，并使用@PrepareForTest对用到该静态方法的地方进行初始化。示例代码如下：
 
-```
+```java
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(UserService.class)
 ```
@@ -659,7 +642,7 @@ powermock-api-mockito2对Mockito的版本有一定的兼容性要求，所以建
 如此，在测试过程中，我们就可以模拟Instant类中的静态方法了，并且会影响UserService
 中使用它的地方。示例代码如下：
 
-```
+```java
 Instant moment = Instant.ofEpochSecond(1596494464);
 
 PowerMockito.mockStatic(Instant.class);
@@ -671,54 +654,52 @@ PowerMockito.when(Instant.now()).thenReturn(moment);
 Mockito 的 API来编写测试。对于特殊的模拟行为，使用 PowerMock
 中的语法代替Mockito中的语法即可。完整的测试如下：
 
-```
-
+```java
 @RunWith(PowerMockRunner.class)
 // 使用 PrepareForTest 让模拟行为在被测试代码中生效
 @PrepareForTest({UserService.class})
 public class UserServiceAnnotationTest {
 
-@Mock
-UserRepository mockedUserRepository;
-@Mock
-EmailService mockedEmailService;
+    @Mock
+    UserRepository mockedUserRepository;
+    @Mock
+    EmailService mockedEmailService;
 
-@Spy
-EncryptionService mockedEncryptionService = new EncryptionService();
+    @Spy
+    EncryptionService mockedEncryptionService = new EncryptionService();
 
-@InjectMocks
-UserService userService;
+    @InjectMocks
+    UserService userService;
 
-@Test
-public void should_register() {
-// 模拟前生成一个 Instant 实例
-Instant moment = Instant.ofEpochSecond(1596494464);
+    @Test
+    public void should_register() {
+        // 模拟前生成一个 Instant 实例
+        Instant moment = Instant.ofEpochSecond(1596494464);
+                
+        // 模拟并设定期望返回值
+        PowerMockito.mockStatic(Instant.class);
+        PowerMockito.when(Instant.now()).thenReturn(moment);
 
-// 模拟并设定期望返回值
-PowerMockito.mockStatic(Instant.class);
-PowerMockito.when(Instant.now()).thenReturn(moment);
+        // Given
+        User user = new User("admin@test.com", "admin", "xxx", null);
 
-// Given
-User user = new User("admin@test.com", "admin", "xxx", null);
+        // When
+        userService.register(user);
 
-// When
-userService.register(user);
+        // Then
+        verify(mockedEmailService).sendEmail(
+                eq("admin@test.com"),
+                eq("Register Notification"),
+                eq("Register Account successful! your username is admin"));
 
-// Then
-verify(mockedEmailService).sendEmail(
-eq("admin@test.com"),
-eq("Register Notification"),
-eq("Register Account successful! your username is admin"));
+        ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
+        verify(mockedUserRepository).saveUser(argument.capture());
 
-ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-verify(mockedUserRepository).saveUser(argument.capture());
-
-assertEquals("admin@test.com", argument.getValue().getEmail());
-assertEquals("admin", argument.getValue().getUsername());
-assertEquals("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860",
-argument.getValue().getPassword());
-assertEquals(moment, argument.getValue().getCreateAt());
-}
+        assertEquals("admin@test.com", argument.getValue().getEmail());
+        assertEquals("admin", argument.getValue().getUsername());
+        assertEquals("cd2eb0837c9b4c962c22d2ff8b5441b7b45805887f051d39bf133b583baf6860", argument.getValue().getPassword());
+        assertEquals(moment, argument.getValue().getCreateAt());
+    }
 }
 ```
 
@@ -728,7 +709,7 @@ assertEquals(moment, argument.getValue().getCreateAt());
 
 上面的例子中，我们不需要验证Instant.now方法的调用情况。如果在某些情况下需要验证静态方法，可以使用PowerMock的verifyStatic方法重新加载修改后的类，然后进行验证。示例代码如下：
 
-```
+```java
 PowerMockito.verifyStatic(Static.class);
 Static.thirdStaticMethod(Mockito.anyInt());
 ```
@@ -745,23 +726,23 @@ Static.thirdStaticMethod(Mockito.anyInt());
 
 如果在处理一个遗留系统时，在UserService中的register方法中发现了这样一段代码：
 
-```
+```java
 public void register(User user) {
-user.setPassword(encryptionService.sha256(user.getPassword()));
-user.setCreateAt(Instant.now());
+    user.setPassword(encryptionService.sha256(user.getPassword()));
+    user.setCreateAt(Instant.now());
 
-userRepository.saveUser(user);
+    userRepository.saveUser(user);
 
-sendEmail(user);
+    sendEmail(user);
 
-// 代码中有一个直接被 new 出来的对象，让这个方法无法被轻易模拟
-(new LogService()).log("finished register action");
+    // 代码中有一个直接被 new 出来的对象，让这个方法无法被轻易模拟
+    (new LogService()).log("finished register action");
 }
 ```
 
 那么可以使用whenNew方法传入一个准备好的模拟对象，以此替换原有的实现，从而达到可测试的目的。
 
-```
+```java
 // Given
 User user = new User("admin@test.com", "admin", "xxx", null);
 
@@ -771,9 +752,8 @@ whenNew(LogService.class).withNoArguments().thenReturn(mockedLogService);
 // When
 userService.register(user);
 
-// Then
+// Then 
 Mockito.verify(mockedLogService).log(any());
-
 ```
 
 使用Mockito准备一个模拟对象，在 new
@@ -793,32 +773,32 @@ _log用于发送日志到日志平台，由于一些基础设施的原因导致�
 
 下面的示例代码演示了如何使用 PowerMock 模拟私有方法。
 
-```
+```java
 public class LogService {
-public void log(String content) {
-_log(content);
-}
+    public void log(String content) {
+        _log(content);
+    }
 
-private void _log(String content) {
-System.out.println(content);
-}
+    private void _log(String content) {
+        System.out.println(content);
+    }
 }
 ```
 
 
 下面的代码用于当 _log被调用时不让其有副作用：
 
-```
+```java
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({LogService.class})
 public class PrivateTest {
-@Test
-public void private_test() throws Exception {
-LogService logService = mock(LogService.class);
-PowerMockito.doNothing().when(logService, "_log", any());
+    @Test
+    public void private_test() throws Exception {
+        LogService logService = mock(LogService.class);
+        PowerMockito.doNothing().when(logService, "_log", any());
 
-logService.log("test data");
-}
+        logService.log("test data");
+    }
 }
 ```
 
@@ -828,7 +808,7 @@ logService.log("test data");
 
 如果一个被测试对象有一个私有属性，但是由于某些原因无法赋予模拟对象，导致测试困难，那么可以使用反射方式修改它的可访问性。例如，某Person类上有一个私有属性name，现在需要为其赋予一个新的值，那么可以像下面这样编写代码：
 
-```
+```java
 Person person = new Person();
 Class<?> clazz = Person.class;
 
@@ -845,21 +825,21 @@ Java 本身的反射能力要强一些。
 
 比如，我们在LogService中增加了一个prefix属性，用于打印日志的前缀，示例代码如下：
 
-```
+```java
 private String prefix = "warning: ";
 ...
 private void _log(String content) {
-System.out.println(prefix + content);
+  System.out.println(prefix + content);
 }
 ```
 
 那么使用Mockito（非PowerMock）的FieldSetter工具类可以直接修改私有属性：
 
-```
+```java
 LogService logService = new LogService();
 FieldSetter.setField(
-logService, LogService.class.getDeclaredField("prefix"),
-"error: "
+        logService, LogService.class.getDeclaredField("prefix"),
+        "error: "
 );
 
 logService.log("test data");
