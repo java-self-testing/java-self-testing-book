@@ -227,9 +227,9 @@ Spring Boot的时候，应该将更多的关注放在服务端应用开发上。
 <p>如果需要在 Spring Boot项目加入测试依赖，只需要引入 spring-boot-starter-test 包即可。spring-boot-starter-test基本上引入了需要用到的所有测试功能，已经间接依赖了JUnit、Mockito，开箱即用。</p>
 <p>至于测试需要使用的其他依赖包，则需要单独添加，在后面的示例中也会逐步补充说明。由于Spring使用的是统一的依赖版本管理器，因此不需要为Spring组件设置版本，如果希望和本书的代码保持一致，可以选择2.4系列的版本。如果是已经存在的项目，加入下面的依赖到Pom文件中即可开箱使用：</p>
 <pre><code class="language-xml">&lt;dependency&gt;
-&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-&lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
-&lt;scope&gt;test&lt;/scope&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;
 </code></pre>
 <p>上面介绍了Spring下的三种测试类型，对于只使用JUnit就可以测试的简单对象、静态方法类，直接使用JUnit和Mockito完成测试即可，无须再讨论。下面聊聊如何使用Spring容器加载Bean进行单元测试和全量启动Spring
@@ -243,30 +243,29 @@ Web项目，里面包含Controller、Service、Entity、Mapper等分层和模块
 <p>一般来说，主要逻辑都会写在Service中，因此，Service
 也就成了我们的主要测试目标。下面将对其编写测试。</p>
 <p>UserService中的主要逻辑用于实现添加用户、列出用户等功能，UserService依赖于UserMapper，如果只是测试UserService，然后模拟依赖的Mapper其实非常容易，示例代码如下：</p>
-<pre><code>
-@Service
+<pre><code class="language-java">@Service
 public class UserService {
 
-public static final String KEY = &quot;ea416ed0759d46a8de58f63a59077499&quot;;
+    public static final String KEY = &quot;ea416ed0759d46a8de58f63a59077499&quot;;
 
-@Autowired
-private UserMapper userMapper;
+    @Autowired
+    private UserMapper userMapper;
 
-public User add(User user) {
-user.setCreateAt(Instant.now());
-user.setUpdateAt(Instant.now());
-user.setPassword(hash(user.getPassword()));
-userMapper.insert(user);
-return user;
-}
+    public User add(User user) {
+        user.setCreateAt(Instant.now());
+        user.setUpdateAt(Instant.now());
+        user.setPassword(hash(user.getPassword()));
+        userMapper.insert(user);
+        return user;
+    }
 
-public List&lt;User&gt; listAll() {
-return userMapper.selectAll();
-}
+    public List&lt;User&gt; listAll() {
+        return userMapper.selectAll();
+    }
 
-private String hash(String text) {
-return new HmacUtils(HmacAlgorithms.HMAC_SHA_512, KEY).hmacHex(text);
-}
+    private String hash(String text) {
+        return new HmacUtils(HmacAlgorithms.HMAC_SHA_512, KEY).hmacHex(text);
+    }
 }
 </code></pre>
 <p>在 Spring 中，常规的做法是使用@Autowired注解来注入依赖的
@@ -276,10 +275,10 @@ UserMapper，并将其设置为私有属性。这时需要模拟UserMapper，但
 或者反射工具来实现模拟，比如FieldSetter。在Spring
 Test的工具集中还可以使用 Reflection-TestUtils实现类似的效果。</p>
 <p>也可以使用Spring的构造方法来注入新模拟的对象，示例代码如下：</p>
-<pre><code>private final UserMapper userMapper;
+<pre><code class="language-java">private final UserMapper userMapper;
 
 public UserService(UserMapper userMapper) {
-this.userMapper = userMapper;
+    this.userMapper = userMapper;
 }
 </code></pre>
 <p>当需要被依赖的对象非常多的时候，这样编写代码会稍稍有点麻烦，也无法解决与@Value等类似的注解问题。对于这种情况，在Spring中可以使用SpringExtension来运行测试，并集成Spring的依赖注入功能。</p>
@@ -287,42 +286,40 @@ this.userMapper = userMapper;
 Extension，注解 @RunWith 也被替换成了 @ExtendWith。</p>
 <p>下面创建一个UserServiceTest测试并使用SpringExtension作为测试的JUnit拓展。由于这个拓展初始化了Mockito注解的相关行为，因此可以实现与MockitoExtension相似的功能，此外，它还提供了与Spring结合更为紧密的其他功能。</p>
 <p>创建的基础测试环境如下：</p>
-<pre><code>@ExtendWith(SpringExtension.class)
+<pre><code class="language-java">@ExtendWith(SpringExtension.class)
 public class UserServiceTest {
 
-@InjectMocks
-private UserService userService;
+    @InjectMocks
+    private UserService userService;
 
-@Mock
-private UserMapper userMapper;
-...
+    @Mock
+    private UserMapper userMapper;
+    ...
 }
 </code></pre>
 <p>下面添加2个测试，用来测试列出、添加用户这两个功能：</p>
-<pre><code>
-@Test
+<pre><code class="language-java">@Test
 public void should_list_users() {
-userService.listAll();
-Mockito.verify(userMapper).selectAll();
+  userService.listAll();
+  Mockito.verify(userMapper).selectAll();
 }
 
 @Test
 public void should_add_user() {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-}};
+  User user = new User() {{
+    setUsername(&quot;zhangsan&quot;);
+    setPassword(&quot;123456&quot;);
+  }};
 
-userService.add(user);
+  userService.add(user);
 
-ArgumentCaptor&lt;User&gt; argument = ArgumentCaptor.forClass(User.class);
-Mockito.verify(userMapper).insert(argument.capture());
+  ArgumentCaptor&lt;User&gt; argument = ArgumentCaptor.forClass(User.class);
+  Mockito.verify(userMapper).insert(argument.capture());
 
-assertEquals(&quot;zhangsan&quot;, argument.getValue().getUsername());
-assertEquals(&quot;667f1213e4a57dbee7cd9e8993b82adef1032f7681a5d5c941c30281f90e7eceba629cc9ccf3f133fb478f3f54d9537c2dd50895380f659370c2a14147449ac4&quot;,
-argument.getValue().getPassword());
-assertNotNull(argument.getValue().getCreateAt());
-assertNotNull(argument.getValue().getUpdateAt());
+  assertEquals(&quot;zhangsan&quot;, argument.getValue().getUsername());
+  assertEquals(&quot;667f1213e4a57dbee7cd9e8993b82adef1032f7681a5d5c941c30281f90e7eceba629cc9ccf3f133fb478f3f54d9537c2dd50895380f659370c2a14147449ac4&quot;, argument.getValue().getPassword());
+  assertNotNull(argument.getValue().getCreateAt());
+  assertNotNull(argument.getValue().getUpdateAt());
 }
 </code></pre>
 <p>如上，一组基本的测试就完成了。在大多数情况下，使用SpringExtension＋Mockito能完成大部分的测试工作。SpringExtension起到了与MockitoExtension类似的功能，又能与Spring依赖注入一起使用，非常适合Service的测试工作。</p>
@@ -340,27 +337,26 @@ SpringJUnit4ClassRunner 或者拓展 SpringJunit4ClassRunner 类来实现。</p>
 <p>在 test 目录下，创建与Application 路径相同的包和一个测试类，使用@SpringBootTest
 修饰这个测试类。由于@SpringBootTest中已经默认包含了@ExtendWith（{SpringExtension.
 class}），因此可以省略这一行注解，但在JUnit4中依然需要用到@RunWith注解：</p>
-<pre><code class="language-java">
-@SpringBootTest
+<pre><code class="language-java">@SpringBootTest
 public class ApplicationTest {
 
-@Autowired
-private UserService userService;
+    @Autowired
+    private UserService userService;
 
-@Test
-public void should_list_users() {
-userService.listAll();
-}
+    @Test
+    public void should_list_users() {
+        userService.listAll();
+    }
 
-@Test
-public void should_add_user() {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-}};
+    @Test
+    public void should_add_user() {
+        User user = new User() {{
+            setUsername(&quot;zhangsan&quot;);
+            setPassword(&quot;123456&quot;);
+        }};
 
-userService.add(user);
-}
+        userService.add(user);
+    }
 }
 </code></pre>
 <p>userService是这个上下文中真实的对象，在上述代码中，@SpringBootTest会创建依赖的UserMapper，以便我们访问数据库。上面的例子只是验证了被测试的代码能否运行，还没有断言，我们可以增加一些测试数据进行断言。</p>
@@ -368,17 +364,16 @@ userService.add(user);
 Mapper，而是使用了真实的
 Mapper将数据写入内存数据库中。整个过程会加载所有需要用到的Bean，会启动全部的上下文，一般这种配置方式会用于E2E测试。</p>
 <p>在持久库选择了MyBatis的情况下，为了处理MyBatis相关的配置，我们需要使用mybatis-spring-boot-starter包和H2内嵌数据库，在Pom文件中加入相关的依赖即可实现，示例代码如下：</p>
-<pre><code>&lt;dependency&gt;
-&lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
-&lt;artifactId&gt;mybatis-spring-boot-starter&lt;/artifactId&gt;
-&lt;version&gt;2.1.0&lt;/version&gt;
+<pre><code class="language-java">&lt;dependency&gt;
+  &lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;mybatis-spring-boot-starter&lt;/artifactId&gt;
+  &lt;version&gt;2.1.0&lt;/version&gt;
 &lt;/dependency&gt;
 &lt;dependency&gt;
-&lt;groupId&gt;com.h2database&lt;/groupId&gt;
-&lt;artifactId&gt;h2&lt;/artifactId&gt;
-&lt;scope&gt;test&lt;/scope&gt;
+  &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+  &lt;artifactId&gt;h2&lt;/artifactId&gt;
+  &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;
-
 </code></pre>
 <p>mybatis-spring-boot-starter在这里用于处理与Mapper相关的逻辑，H2充当了内存数据库，Starter则会根据环境需要自动进行配置。</p>
 <p>由于这种方式没有模拟依赖的对象，因此不能进行断言，需要直接获取并判断数据库的数据（如果是API测试，可以通过API查询来进行验证）。</p>
@@ -391,14 +386,14 @@ private JdbcTemplate jdbcTemplate;
 
 @Test
 public void should_add_user() {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-}};
+    User user = new User() {{
+        setUsername(&quot;zhangsan&quot;);
+        setPassword(&quot;123456&quot;);
+    }};
 
-userService.add(user);
-int count = JdbcTestUtils.countRowsInTable(jdbcTemplate, &quot;user&quot;);
-assertEquals(1, count);
+    userService.add(user);
+    int count = JdbcTestUtils.countRowsInTable(jdbcTemplate, &quot;user&quot;);
+    assertEquals(1, count);
 }
 </code></pre>
 <p>要说@SpringBootTest启动了全部的上下文环境也不算对，默认情况下，@SpringBootTest
@@ -407,7 +402,7 @@ assertEquals(1, count);
 属性可以修改设置，启动随机端口、固定端口的Web服务器，或者彻底不使用Web环境。</p>
 <p>启动一个随机端口的示例代码如下：</p>
 <pre><code class="language-java">@SpringBootTest(
-webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 </code></pre>
 <p>相应的模式说明如下。</p>
@@ -428,16 +423,15 @@ webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 </ul>
 <p>另外，还可以配置一个 classes 参数来确定包扫描的位置。</p>
 <pre><code class="language-java">@ContextConfiguration(classes=...)}：
-
 @SpringBootTest(
-webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-classes = {Application.class}
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        classes = {Application.class}
 )
 </code></pre>
 <p>默认情况下，Spring Boot会通过扫描入口类包下的所有类来注册相关的Bean。但是如果因某些原因无法做到，则可以使用classes参数来配置需要扫描的目标类。例如，在多模块项目下，配置了多个启动应用（比如前台、Admin可以独立启动，但是它们在一个代码库中），它们共享一个common模块，这样就可以在各自的启动应用中独立运行测试，只要替换classes中的值即可实现相互之间不受干扰。</p>
 <p>另外，@SpringBootTest注解也可以通过value参数注入配置，用于激活与测试相关的Profile或者定义端口，示例代码如下：</p>
 <pre><code class="language-java">@SpringBootTest(
-value = {&quot;server.port=9090&quot;}
+        value = {&quot;server.port=9090&quot;}
 )
 </code></pre>
 <h3 id="532-bean">5.3.2 对 Bean 的模拟和监视</h3>
@@ -446,33 +440,33 @@ value = {&quot;server.port=9090&quot;}
 <p>而在Spring
 Boot的测试中，还提供了另外一个注解@MockBean。@MockBean必须在SpringBoot的测试上下文中工作，可以简单地将@MockBean理解为以模拟对象的方式定义一个Bean，然后将模拟对象无差别地放到了容器中。它的生命周期与普通的Bean类似。比如，在使用SpringExtension的UserServiceTest中，UserMapper是通过注解@InjectMocks
 的方式加载到UserService中的，在这个场景下不会有额外的Bean被加载进来。示例代码如下：</p>
-<pre><code>@ExtendWith(SpringExtension.class)
+<pre><code class="language-java">@ExtendWith(SpringExtension.class)
 public class UserServiceTest {
 
-@InjectMocks
-private UserService userService;
+    @InjectMocks
+    private UserService userService;
 
-@Mock
-private UserMapper userMapper;
+    @Mock
+    private UserMapper userMapper;
 }
 </code></pre>
 <p>这里如果使用了@MockBean就可以省略掉@InjectMocks，只是这样一来，就需要使用@Autowired来获取UserService的Bean了。请注意区分这两种形式的写法。示例代码如下：</p>
-<pre><code>@SpringBootTest
+<pre><code class="language-java">@SpringBootTest
 public class UserServiceMockBeanTest {
 
-@Autowired
-private UserService userService;
+    @Autowired
+    private UserService userService;
 
-@MockBean
-// 注意，要求 UserMapper 没有被定义过才能被模拟
-private UserMapper userMapper;
+    @MockBean
+    // 注意，要求 UserMapper 没有被定义过才能被模拟
+    private UserMapper userMapper;
 
-@Test
-public void should_list_users() {
-userService.listAll();
-Mockito.verify(userMapper).selectAll();
-}
-}
+    @Test
+    public void should_list_users() {
+        userService.listAll();
+        Mockito.verify(userMapper).selectAll();
+    }
+}   
 </code></pre>
 <p>使用@MockBean注解时，内部创建的依然是Mockito的模拟对象，不过它是以Bean的方式存在的，并且会以此形式初始化
 ApplicationContext上下文。@MockBean
@@ -494,25 +488,24 @@ Boot强大的配置可以有很多方法绕过这些问题。</p>
 </li>
 </ul>
 <p>在下面的示例中，使用了专门的文件来配置内存数据库、日志级别、端口等，避免测试时影响正常的启动。</p>
-<pre><code class="language-yaml">
-// application.yml 位于 /test/resources 下
+<pre><code class="language-yaml">// application.yml 位于 /test/resources 下 
 server:
-port: 8080
+  port: 8080
 
 logging.file: logs/application.log
 logging:
-level:
-org:
-springframework:
-web: DEBUG
+  level:
+    org:
+      springframework:
+        web: DEBUG
 spring:
-datasource:
-url: jdbc:h2:mem:unit_testing_db
-h2:
-console:
-enabled: true
+  datasource:
+    url:  jdbc:h2:mem:unit_testing_db
+  h2:
+    console:
+      enabled: true
 mybatis:
-mapper-locations: classpath:mapper/*.xml
+  mapper-locations: classpath:mapper/*.xml
 </code></pre>
 <h3 id="533-spring-boot">5.3.3 Spring Boot 切片配置</h3>
 <p>正因为@SpringBootTest帮我们启动了所有需要的配置，因此使用了@SpringBootTest
@@ -535,29 +528,27 @@ MyBatis Mapper时，可以使用@MybatisTest 只加载必要的配置。</p>
 Slices来描述这类测试，并通过分层将代码进行分片加载，以达到刚好满足测试需求的目的。</p>
 <p>例如@WebMvcTest就只会启动与RequestMapping相关的Bean，比如@Controller、@ControllerAdvice、@JsonComponent、Converter、GenericConverter、Filter、WebMvcConfigurer和HandlerMethodArgumentResolver等。</p>
 <p>使用@WebMvcTest就可以只测试引入的Controller，而不必启动其他相关的Bean，并且也能让Controller上的那些注解生效，示例代码如下：</p>
-<pre><code>@WebMvcTest(UserController.class)
+<pre><code class="language-java">@WebMvcTest(UserController.class)
 public class ApplicationTestOnlyController {
 
-@Autowired
-private MockMvc mvc;
+    @Autowired
+    private MockMvc mvc;
 
-@MockBean
-private UserService userService;
+    @MockBean
+    private UserService userService;
 
-@Test
-public void should_list_users() throws Exception {
-Instant createAndUpdateInstant =
-Instant.parse(&quot;2021-11-07T00:55:32.026Z&quot;);
-given(this.userService.listAll())
-.willReturn(Lists.newArrayList(new User(1L, &quot;James&quot;, &quot;123456&quot;,
-createAndUpdateInstant, createAndUpdateInstant)));
+    @Test
+    public void should_list_users() throws Exception {
+        Instant createAndUpdateInstant = Instant.parse(&quot;2021-11-07T00:55:32.026Z&quot;);
+        given(this.userService.listAll())
+                .willReturn(Lists.newArrayList(new User(1L, &quot;James&quot;, &quot;123456&quot;, createAndUpdateInstant, createAndUpdateInstant)));
 
-this.mvc.perform(MockMvcRequestBuilders.get(&quot;/users&quot;)
-.accept(MediaType.APPLICATION_JSON_VALUE))
-.andExpect(status().isOk()).andExpect(
-content().string(&quot;[{&quot;id&quot;:1,&quot;username&quot;:&quot;James&quot;,&quot;password&quot;:&quot;123456&quot;,&quot;createAt&quot;:&quot;2021-11-07T00:55:32.026Z&quot;,&quot;updateAt&quot;:&quot;2021-11-07T00:55:32.026Z&quot;}]&quot;)
-);
-}
+        this.mvc.perform(MockMvcRequestBuilders.get(&quot;/users&quot;)
+                .accept(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk()).andExpect(
+                content().string(&quot;[{\&quot;id\&quot;:1,\&quot;username\&quot;:\&quot;James\&quot;,\&quot;password\&quot;:\&quot;123456\&quot;,\&quot;createAt\&quot;:\&quot;2021-11-07T00:55:32.026Z\&quot;,\&quot;updateAt\&quot;:\&quot;2021-11-07T00:55:32.026Z\&quot;}]&quot;)
+        );
+    }
 }
 </code></pre>
 <p>上面的示例中，只是初始化了Spring Boot基本的上下文和与Spring
@@ -573,11 +564,11 @@ Boot并没有启动与数据库相关的设施。这里的UserService有被模�
 </ul>
 <p>除此之外，@WebMvcTest加载的Bean也非常有限，基本只有UserController，因此仍然可以认为是Controller层的单元测试。</p>
 <p>查阅@WebMvcTest和@SpringBootTest的部分源码，可以发现它们的不同之处。@WebMvcTest相当于基于Spring所进行的测试，它组合了很多自动化配置的注解，示例代码如下：</p>
-<pre><code>// @WebMvcTest 的关键注解
+<pre><code class="language-java">// @WebMvcTest 的关键注解
 @BootstrapWith(WebMvcTestContextBootstrapper.class)
 @ExtendWith({SpringExtension.class})
 @OverrideAutoConfiguration(
-enabled = false
+    enabled = false
 )
 @TypeExcludeFilters({WebMvcTypeExcludeFilter.class})
 @AutoConfigureCache
@@ -586,7 +577,7 @@ enabled = false
 @ImportAutoConfiguration
 </code></pre>
 <p>而@SpringBootTest则使用SpringBootTestContextBootstrapper构建了完整的测试上下文，示例代码如下：</p>
-<pre><code>// @SpringBootTest 的关键注解
+<pre><code class="language-java">// @SpringBootTest 的关键注解 
 @BootstrapWith(SpringBootTestContextBootstrapper.class)
 @ExtendWith(SpringExtension.class)
 </code></pre>
@@ -595,52 +586,51 @@ Mapper、Redis连接、Spring Data JPA等，也可以使用相应的局部测试
 <p><strong>1. @MybatisTest</strong></p>
 <p>MyBatis不在默认的自动配置中，如果你是通过mybatis-spring-boot-autoconfigure包自动配置的MyBatis，可以引入
 mybatis-spring-boot-test-autoconfigure，示例代码如下：</p>
-<pre><code>&lt;dependency&gt;
-&lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
-&lt;artifactId&gt;mybatis-spring-boot-starter-test&lt;/artifactId&gt;
-&lt;version&gt;2.1.0&lt;/version&gt;
+<pre><code class="language-java">&lt;dependency&gt;
+  &lt;groupId&gt;org.mybatis.spring.boot&lt;/groupId&gt;
+  &lt;artifactId&gt;mybatis-spring-boot-starter-test&lt;/artifactId&gt;
+  &lt;version&gt;2.1.0&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre>
 <p>若想实现只测试 Mapper 的逻辑，可以在使用@MybatisTest 时只创建与 Mapper
 相关的Bean，并启动内存模拟数据的存储（如果引入了内存数据库的Starter），以便进行断言。示例代码如下：</p>
-<pre><code>@MybatisTest
+<pre><code class="language-java">@MybatisTest
 public class TestForMapper {
 
-@Autowired
-private UserMapper userMapper;
+    @Autowired
+    private UserMapper userMapper;
 
-@Test
-void should_save_user() {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-setCreateAt(Instant.now());
-setUpdateAt(Instant.now());
-}};
-userMapper.insert(user);
-// 下面可以是一些断言
-}
+    @Test
+    void should_save_user() {
+        User user = new User() {{
+            setUsername(&quot;zhangsan&quot;);
+            setPassword(&quot;123456&quot;);
+            setCreateAt(Instant.now());
+            setUpdateAt(Instant.now());
+        }};
+        userMapper.insert(user);
+        // 下面可以是一些断言
+    }
 }
 </code></pre>
 <p><strong>2. @JsonTest</strong></p>
 <p>在服务器上进行开发时，经常需要反复调试JSON的序列化。如果没有取得预期的效果，可以为其编写单独的测试，有针对性地进行调试。下面的示例使用@JsonTest加载了与JSON相关的自动化配置，然后检查其与预期的是否匹配。</p>
-<pre><code>@JsonTest
+<pre><code class="language-java">@JsonTest
 public class TestForJson {
 
-@Autowired
-private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-@Test
-void should_serialize_properly() throws JsonProcessingException {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-setCreateAt(Instant.now());
-setUpdateAt(Instant.now());
-}};
-assertEquals(&quot;{&quot;id&quot;:0,&quot;username&quot;:&quot;zhangsan&quot;,&quot;password&quot;:&quot;123456&quot;,&quot;createAt&quot;:&quot;2021-11-07T02:00:45.126Z&quot;,&quot;updateAt&quot;:&quot;2021-11-07T02:00:45.126Z&quot;}&quot;,
-this.objectMapper.writeValueAsString(user));
-}
+    @Test
+    void should_serialize_properly() throws JsonProcessingException {
+        User user = new User() {{
+            setUsername(&quot;zhangsan&quot;);
+            setPassword(&quot;123456&quot;);
+            setCreateAt(Instant.now());
+            setUpdateAt(Instant.now());
+        }};
+        assertEquals(&quot;{\&quot;id\&quot;:0,\&quot;username\&quot;:\&quot;zhangsan\&quot;,\&quot;password\&quot;:\&quot;123456\&quot;,\&quot;createAt\&quot;:\&quot;2021-11-07T02:00:45.126Z\&quot;,\&quot;updateAt\&quot;:\&quot;2021-11-07T02:00:45.126Z\&quot;}&quot;, this.objectMapper.writeValueAsString(user));
+    }
 }
 </code></pre>
 <p>Spring Boot
@@ -650,18 +640,17 @@ private JacksonTester&lt;User&gt; userJacksonTester;
 
 @Test
 void should_serialize_properly_with_tester() throws IOException {
-User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
-setCreateAt(Instant.now());
-setUpdateAt(Instant.now());
-}};
-assertThat(this.userJacksonTester.write(user)).hasJsonPath(&quot;@.username&quot;);
-assertThat(this.userJacksonTester.write(user))
-.extractingJsonPathStringValue(&quot;@.username&quot;)
-.isEqualTo(&quot;zhangsan&quot;);
+    User user = new User() {{
+        setUsername(&quot;zhangsan&quot;);
+        setPassword(&quot;123456&quot;);
+        setCreateAt(Instant.now());
+        setUpdateAt(Instant.now());
+    }};
+    assertThat(this.userJacksonTester.write(user)).hasJsonPath(&quot;@.username&quot;);
+    assertThat(this.userJacksonTester.write(user))
+            .extractingJsonPathStringValue(&quot;@.username&quot;)
+            .isEqualTo(&quot;zhangsan&quot;);
 }
-
 </code></pre>
 <p>由于@...Test不能组合使用，因此如果想要在@WebMvcTest里配置其他的Bean，可以通过@AutoConfigure...注解选择性地引入自动配置，或者自己直接创建相关的Bean。创建的方式是编写一个@Configuration修饰的配置类，并放置到Spring
 Boot能扫描到的地方。</p>
@@ -718,18 +707,18 @@ Bean。MockMvc模拟的是Web服务器和HTTP协议请求，以及接收、解�
 <p>在下面的测试示例中，should_list_users中主要涉及两部分内容，一部分是对模拟的对象给予返回值，另外一部分就是发出请求和验证请求。</p>
 <pre><code class="language-java">@Test
 public void should_list_users() throws Exception {
-// 模拟 UserService
-given(userService.listAll()).willReturn(
-Arrays.asList(new User() {{
-setId(01L);
-setUsername(&quot;Test user&quot;);
-setPassword(&quot;123456&quot;);
-setCreateAt(Instant.now());
-setUpdateAt(Instant.now());
-}})
-);
+  // 模拟 UserService
+  given(userService.listAll()).willReturn(
+    Arrays.asList(new User() {{
+      setId(01L);
+      setUsername(&quot;Test user&quot;);
+      setPassword(&quot;123456&quot;);
+      setCreateAt(Instant.now());
+      setUpdateAt(Instant.now());
+    }})
+  );
 
-// 进行测试调用和断言
+ // 进行测试调用和断言
 this.mvc.perform(get(&quot;/users&quot;).accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 }
 </code></pre>
@@ -747,11 +736,10 @@ this.mvc.perform(get(&quot;/users&quot;).accept(MediaType.APPLICATION_JSON)).and
 </li>
 </ul>
 <p>进行测试调用和断言的这部分链式调用不易理解，现在拆解开来看一下整个过程，里面实际上有很多步骤。</p>
-<pre><code class="language-java">// 1. 构建一个模拟请求，get 方法接受一个请求的路径，并设置 accept
-头部值为 application-json
+<pre><code class="language-java">// 1. 构建一个模拟请求，get 方法接受一个请求的路径，并设置 accept 头部值为 application-json
 MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
-.get(&quot;/users&quot;)
-.accept(MediaType.APPLICATION_JSON);
+        .get(&quot;/users&quot;)
+        .accept(MediaType.APPLICATION_JSON);
 // 2. 执行这个请求，生成一个 ResultAction
 ResultActions perform = this.mvc.perform(builder);
 // 3. 定义一个匹配器
@@ -780,62 +768,62 @@ API 实现的。</p>
 Boot对H2的支持也比较好，相关的自动配置已经被纳入版本管理器中。</p>
 <p>以H2为例，如果需要在项目中使用H2，先在Pom文件中加入相关依赖，并在测试的资源目录下增加相关配置，示例代码如下：</p>
 <pre><code class="language-xml">&lt;dependency&gt;
-&lt;groupId&gt;com.h2database&lt;/groupId&gt;
-&lt;artifactId&gt;h2&lt;/artifactId&gt;
-&lt;scope&gt;test&lt;/scope&gt;
+    &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+    &lt;artifactId&gt;h2&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
 &lt;/dependency&gt;
 </code></pre>
 <p>然后设置数据源连接串，并开启H2控制台，示例代码如下：</p>
-<pre><code>spring:
-datasource:
-url: jdbc:h2:mem:unit_testing_db
-h2:
-console:
-enabled: true
+<pre><code class="language-yaml">spring:
+  datasource:
+    url: jdbc:h2:mem:unit_testing_db
+  h2:
+    console:
+      enabled: true
 </code></pre>
 <p>H2默认控制台的访问路径是（h2-console，可以通过spring.h2.console.path属性修改路径。实际上测试前和测试后控制台上都不会有数据，可以通过断点中断测试，并访问H2控制台路径。</p>
 <p>如果使用了Flyway等数据迁移工具，那么在测试启动时它也会生效，但由于数据库在内存中，重启会丢失数据，因此不会重复执行迁移任务。</p>
 <p>H2也支持将数据落盘，使用的方式是修改连接字符串，即将连接字符串中的mem修改成指定的文件路径，示例代码如下：</p>
-<pre><code>spring:
-datasource:
-url: jdbc:h2:file:/data/h2:unit_testing_db
+<pre><code class="language-java">spring:
+  datasource:
+    url: jdbc:h2:file:/data/h2:unit_testing_db
 </code></pre>
 <p><strong>2. 内嵌 Redis</strong></p>
 <p>如果业务代码中使用了Redis，且Redis的客户端是模拟的，那么测试不到与Redis相关的特性，测试性价比降低。对此，也可以通过内嵌
 Redis的方式来充分测试与Redis相关的逻辑，测试效率会大大提高。</p>
 <p>目前Spring
 Boot没有支持内嵌Redis的自动配置，因此需要手动配置。示例代码如下：</p>
-<pre><code>&lt;dependency&gt;
-&lt;groupId&gt;redis.embedded&lt;/groupId&gt;
-&lt;artifactId&gt;embedded-redis&lt;/artifactId&gt;
-&lt;version&gt;0.5&lt;/version&gt;
+<pre><code class="language-java">&lt;dependency&gt;
+  &lt;groupId&gt;redis.embedded&lt;/groupId&gt;
+  &lt;artifactId&gt;embedded-redis&lt;/artifactId&gt;
+  &lt;version&gt;0.5&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre>
 <p>可以通过在测试基类中编写 setup 和 teardown 方法来设置内嵌
 Redis。示例代码如下：</p>
-<pre><code>public class SpringBaseTest {
+<pre><code class="language-java">public class SpringBaseTest {
 
-private RedisServer redisServer;
+    private RedisServer redisServer;
 
-@BeforeClass
-public void setup() throws Exception {
-redisServer = new RedisServer(6379);
-redisServer.start();
-}
+    @BeforeClass
+    public void setup() throws Exception {
+        redisServer = new RedisServer(6379);
+        redisServer.start();
+    }
 
-@AfterClass
-public void teardown() throws Exception {
-redisServer.stop();
-}
+    @AfterClass
+    public void teardown() throws Exception {
+        redisServer.stop();
+    }
 }
 </code></pre>
 <p><strong>3. 内嵌 MongoDB</strong></p>
 <p>Spring
 Boot默认支持了内嵌MongoDB，并且提供了相关的自动配置类。只需要增加依赖，添加修改YAML配置即可。示例代码如下：</p>
-<pre><code>&lt;dependency&gt;
-&lt;groupId&gt;de.flapdoodle.embed&lt;/groupId&gt;
-&lt;artifactId&gt;de.flapdoodle.embed.mongo&lt;/artifactId&gt;
-&lt;version&gt;2.2.1-SNAPSHOT&lt;/version&gt;
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;de.flapdoodle.embed&lt;/groupId&gt;
+    &lt;artifactId&gt;de.flapdoodle.embed.mongo&lt;/artifactId&gt;
+    &lt;version&gt;2.2.1-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;
 </code></pre>
 <p>Spring Boot通过 MongoAutoConfiguration类初始化了内嵌的 MongoDB 以及
@@ -865,23 +853,22 @@ Test库中非常实用的工具，在测试过程中用于操作、统计表中�
 <p>在测试中不可避免地要对私有属性、方法进行操作，这可以使用PowerMock等工具来完成，但是大部分情况下没有必要引入这么多库。其实Spring
 Test 库也丙置了一个工具，可通过反射简化此类操作。</p>
 <p>例如，给私有属性设置新的值：</p>
-<pre><code>User user = new User() {{
-setUsername(&quot;zhangsan&quot;);
-setPassword(&quot;123456&quot;);
+<pre><code class="language-java">User user = new User() {{
+    setUsername(&quot;zhangsan&quot;);
+    setPassword(&quot;123456&quot;);
 }};
 
 ReflectionTestUtils.setField(user, &quot;username&quot;, &quot;wang&quot;);
 assertThat(user.getUsername(), equalTo(&quot;wang&quot;));
 </code></pre>
 <p>访问私有属性：</p>
-<pre><code>assertThat(ReflectionTestUtils.getField(user, &quot;username&quot;),
-equalTo(&quot;wang&quot;));
+<pre><code class="language-java">assertThat(ReflectionTestUtils.getField(user, &quot;username&quot;), equalTo(&quot;wang&quot;));
 </code></pre>
 <p>调用私有方法：</p>
-<pre><code>// user 对象中有一个 testPrivateMethod 私有方法
+<pre><code class="language-java">// user 对象中有一个 testPrivateMethod 私有方法 
 assertThat(
-ReflectionTestUtils.invokeMethod(user, &quot;testPrivateMethod&quot;),
-equalTo(&quot;this is private method&quot;)
+        ReflectionTestUtils.invokeMethod(user, &quot;testPrivateMethod&quot;),
+        equalTo(&quot;this is private method&quot;)
 );
 </code></pre>
 <p>在方便的时候，ReflectionTestUtils也可以修改@Autowired修饰的私有方法，快速搞定依赖注入，并且可用于@Value注解修饰的方法。</p>
@@ -892,33 +879,29 @@ equalTo(&quot;this is private method&quot;)
 Boot 提供了TestProperty Values
 工具类来注入配置属性。下面这个例子需要配合@ContextCon-figuration来使用，在测试初始化的时候通过TestProperty
 Values 插入需要的属性。</p>
-<pre><code>
-@SpringBootTest
-@ContextConfiguration(initializers =
-PropertyTest.MyPropertyInitializer.class)
+<pre><code class="language-java">@SpringBootTest
+@ContextConfiguration(initializers = PropertyTest.MyPropertyInitializer.class)
 public class PropertyTest {
 
-@Autowired
-private ApplicationContext context;
+    @Autowired
+    private ApplicationContext context;
 
-@Value(&quot;${testProperty}&quot;)
-private String testProperty;
+    @Value(&quot;${testProperty}&quot;)
+    private String testProperty;
 
-@Test
-public void test() {
-assertThat(testProperty).isEqualTo(&quot;foo&quot;);
-assertThat(this.context.getEnvironment().getProperty(&quot;testProperty&quot;)).isEqualTo(&quot;foo&quot;);
-}
+    @Test
+    public void test() {
+        assertThat(testProperty).isEqualTo(&quot;foo&quot;);
+        assertThat(this.context.getEnvironment().getProperty(&quot;testProperty&quot;)).isEqualTo(&quot;foo&quot;);
+    }
 
-static class MyPropertyInitializer
-implements
-ApplicationContextInitializer&lt;ConfigurableApplicationContext&gt; {
-@Override
-public void initialize(ConfigurableApplicationContext
-applicationContext) {
-TestPropertyValues.of(&quot;testProperty=foo&quot;).applyTo(applicationContext);
-}
-}
+    static class MyPropertyInitializer
+            implements ApplicationContextInitializer&lt;ConfigurableApplicationContext&gt; {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertyValues.of(&quot;testProperty=foo&quot;).applyTo(applicationContext);
+        }
+    }
 }
 </code></pre>
 <p>这个工具我们日常用得不多，在动态插入属性时可以使用此方法。如果是静态插入属性，可以使用@SpringBootTest注解的value、properties、args参数。</p>
@@ -926,14 +909,14 @@ TestPropertyValues.of(&quot;testProperty=foo&quot;).applyTo(applicationContext);
 <p>Spring
 Boot提供了OutputCaptureExtension来捕获控制台信息，如果代码中使用了System.out
 或者System.err输出信息到控制台，那么就可以使用此工具来捕获控制台信息，示例代码如下：</p>
-<pre><code>@ExtendWith(OutputCaptureExtension.class)
+<pre><code class="language-java">@ExtendWith(OutputCaptureExtension.class)
 public class OutputCaptureTest {
 
-@Test
-public void test_capture(CapturedOutput output) throws Exception {
-System.out.println(&quot;Hello world!&quot;);
-assertThat(output).contains(&quot;world&quot;);
-}
+    @Test
+    public void test_capture(CapturedOutput output) throws Exception {
+        System.out.println(&quot;Hello world!&quot;);
+        assertThat(output).contains(&quot;world&quot;);
+    }
 }
 </code></pre>
 <p><strong>3. TestRestTemplate</strong></p>
