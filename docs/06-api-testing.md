@@ -41,14 +41,14 @@ REST Assured 由 Johan Haleby 在 Jayway 公司创建。与MockMvo
 不同的是，REST Assured
 更像是Java中关于测试的领域特定语言（DSL）。它提供了一套链式的API来编写Given、When、Then风格的测试。示例代码如下：
 
-```
+```java
 given().
-param("key1", "value1").
-param("key2", "value2").
+    param("key1", "value1").
+    param("key2", "value2").
 when().
-post("/somewhere").
+    post("/somewhere").
 then().
-body(containsString("OK"));
+    body(containsString("OK"));
 ```
 
 在上述代码中，通过流式的风格声明了Given、When、Then这三种语句块，让API测试具有与单元测试类似的风格。
@@ -61,20 +61,19 @@ Assured只是一个单独的测试套件，内含一个HTTP客户端，测试时
 
 创建一个Maven项目或者模块，除了要引人Spring生态下基本的依赖外，还需要引入下面的依赖包：
 
-```
+```xml
 <dependency>
-<groupId>io.rest-assured</groupId>
-<artifactId>rest-assured</artifactId>
-<version>4.4.0</version>
-<scope>test</scope>
+    <groupId>io.rest-assured</groupId>
+    <artifactId>rest-assured</artifactId>
+    <version>4.4.0</version>
+    <scope>test</scope>
 </dependency>
 ```
 
 RESTAssured的配置非常简单，使用下面的脚本即可完成初始化：
 
-```
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes =
-{Application.class})
+```java
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {Application.class})
 
 ....
 
@@ -83,11 +82,11 @@ private int port;
 
 @BeforeEach
 public void setup() {
-System.out.println("port:" + port);
+  System.out.println("port:" + port);
 
-RestAssured.port = port;
-RestAssured.basePath = "/api";
-RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+  RestAssured.port = port;
+  RestAssured.basePath = "/api";
+  RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 }
 ```
 
@@ -109,46 +108,44 @@ MariaDB是数据库管理系统MySQL的一个分支，主要由开源社区维�
 MariaDB4j实际上只是一个启动器，真正的数据库还是会由与操作系统相关的二进制包启动。为了使用随机的数据库端口，我们不再使用Spring
 Boot的自动配置，而是直接给上下文配置一个DataSource。来看个示例，老规矩，先引入一个依赖：
 
-```
+```java
 <dependency>
-<groupId>ch.vorburger.mariaDB4j</groupId>
-<artifactId>mariaDB4j</artifactId>
-<version>2.4.0</version>
+    <groupId>ch.vorburger.mariaDB4j</groupId>
+    <artifactId>mariaDB4j</artifactId>
+    <version>2.4.0</version>
 </dependency>
 ```
 
 然后在测试模块中引入一个配置类。在测试模块中定义的相关Bean也会被加载到Spring
 Boot 的上下文中，但是不会对业务代码产生影响。
 
-```
-
+```java
 @Configuration
 public class MariaDB4jSpringConfiguration {
 
-@Autowired
-private DataSourceProperties dataSourceProperties;
+    @Autowired
+    private DataSourceProperties dataSourceProperties;
 
-@Bean
-public MariaDB4jSpringService mariaDB4j() {
-MariaDB4jSpringService mariaDB4jSpringService = new
-MariaDB4jSpringService();
-mariaDB4jSpringService.getConfiguration().addArg("--user=root");
-mariaDB4jSpringService.getConfiguration().addArg("--character-set-server=utf8");
-return mariaDB4jSpringService;
-}
+    @Bean
+    public MariaDB4jSpringService mariaDB4j() {
+        MariaDB4jSpringService mariaDB4jSpringService = new MariaDB4jSpringService();
+        mariaDB4jSpringService.getConfiguration().addArg("--user=root");
+        mariaDB4jSpringService.getConfiguration().addArg("--character-set-server=utf8");
+        return mariaDB4jSpringService;
+    }
 
-@Bean
-@Primary
-public DataSource dataSource() throws ManagedProcessException {
-String dbname = UUID.randomUUID().toString().substring(0, 8);
-mariaDB4j().getDB().createDB(dbname);
-return DataSourceBuilder.create()
-.driverClassName(dataSourceProperties.getDriverClassName())
-.url(mariaDB4j().getConfiguration().getURL(dbname))
-.username(dataSourceProperties.getUsername())
-.password(dataSourceProperties.getPassword())
-.build();
-}
+    @Bean
+    @Primary
+    public DataSource dataSource() throws ManagedProcessException {
+        String dbname = UUID.randomUUID().toString().substring(0, 8);
+        mariaDB4j().getDB().createDB(dbname);
+        return DataSourceBuilder.create()
+                .driverClassName(dataSourceProperties.getDriverClassName())
+                .url(mariaDB4j().getConfiguration().getURL(dbname))
+                .username(dataSourceProperties.getUsername())
+                .password(dataSourceProperties.getPassword())
+                .build();
+    }
 }
 ```
 
@@ -166,11 +163,11 @@ MySQL的数据源切换成内置的临时数据库。
 
 按照惯例，将DbUnit加入项目中时，先引入需要的依赖包：
 
-```
+```xml
 <dependency>
-<groupId>org.dbunit</groupId>
-<artifactId>dbunit</artifactId>
-<version>2.7.0</version>
+    <groupId>org.dbunit</groupId>
+    <artifactId>dbunit</artifactId>
+    <version>2.7.0</version>
 </dependency>
 ```
 
@@ -185,61 +182,59 @@ DbUnit还提供了一个工具类DatabaseOperation，可以通过它来操作数
 
 下面是一个封装好的服务，将其加载到测试之前和之后的方法中即可。
 
-```
+```java
 @Service
 public class ResetDbService {
 
-private static IDatabaseConnection conn;
+    private static IDatabaseConnection conn;
 
-@Autowired
-private DataSource dataSource;
-private File tempFile;
+    @Autowired
+    private DataSource dataSource;
+    private File tempFile;
+    
+    // 备份数据状态的方法
+    public void backup() throws Exception {
+        this.getConnection();
+        this.backupCustom();
+    }
 
-// 备份数据状态的方法
-public void backup() throws Exception {
-this.getConnection();
-this.backupCustom();
-}
+    // 恢复数据状态的方法
+    public void rollback() throws Exception {
+        this.reset();
+        this.closeConnection();
+    }
 
-// 恢复数据状态的方法
-public void rollback() throws Exception {
-this.reset();
-this.closeConnection();
-}
+    protected void backupCustom() {
+        try {
+            QueryDataSet qds = new QueryDataSet(conn);
+          
+            // 指定需要备份的数据库表，也可以通过编写一个方法来获得数据库中的所有表
+            qds.addTable("user");
+            tempFile = new File("temp.xml");
+            // 写入到 XML 文件中
+            FlatXmlDataSet.write(qds, new FileWriter(tempFile), "UTF-8");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-protected void backupCustom() {
-try {
-QueryDataSet qds = new QueryDataSet(conn);
+    void getConnection() throws DatabaseUnitException {
+        conn = new DatabaseConnection(DataSourceUtils.getConnection(dataSource));
+    }
 
-// 指定需要备份的数据库表，也可以通过编写一个方法来获得数据库中的所有表
-qds.addTable("user");
-tempFile = new File("temp.xml");
-// 写入到 XML 文件中
-FlatXmlDataSet.write(qds, new FileWriter(tempFile), "UTF-8");
-} catch (Exception e) {
-e.printStackTrace();
-}
-}
+    protected void reset() throws FileNotFoundException, DatabaseUnitException, SQLException {
+        FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
+        builder.setColumnSensing(true);
+        IDataSet ds = builder.build(new FileInputStream(tempFile));
 
-void getConnection() throws DatabaseUnitException {
-conn = new
-DatabaseConnection(DataSourceUtils.getConnection(dataSource));
-}
+        DatabaseOperation.CLEAN_INSERT.execute(conn, ds);
+    }
 
-protected void reset() throws FileNotFoundException,
-DatabaseUnitException, SQLException {
-FlatXmlDataSetBuilder builder = new FlatXmlDataSetBuilder();
-builder.setColumnSensing(true);
-IDataSet ds = builder.build(new FileInputStream(tempFile));
-
-DatabaseOperation.CLEAN_INSERT.execute(conn, ds);
-}
-
-protected void closeConnection() throws SQLException {
-if (conn != null) {
-conn.close();
-}
-}
+    protected void closeConnection() throws SQLException {
+        if (conn != null) {
+            conn.close();
+        }
+    }
 }
 ```
 
@@ -260,137 +255,133 @@ ResetDbService服务提供了backup、rollback这两个方法。backup会在测�
 图 6-2 API 测试示例
 
 下面是示例项目的依赖的包：
-```
 
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project
-xmlns="http://maven.apache.org/POM/4.0.0"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-http://maven.apache.org/xsd/maven-4.0.0.xsd">
-<parent>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-parent</artifactId>
-<version>2.4.12</version>
-</parent>
-<modelVersion>4.0.0</modelVersion>
-<artifactId>api</artifactId>
-<dependencies>
-<dependency>
-<groupId>org.projectlombok</groupId>
-<artifactId>lombok</artifactId>
-</dependency>
-<dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-<groupId>org.flywaydb</groupId>
-<artifactId>flyway-core</artifactId>
-</dependency>
-<dependency>
-<groupId>mysql</groupId>
-<artifactId>mysql-connector-java</artifactId>
-<version>8.0.25</version>
-</dependency>
-<dependency>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-starter-test</artifactId>
-<scope>test</scope>
-</dependency>
-<dependency>
-<groupId>ch.vorburger.mariaDB4j</groupId>
-<artifactId>mariaDB4j</artifactId>
-<version>2.4.0</version>
-</dependency>
-<dependency>
-<groupId>io.rest-assured</groupId>
-<artifactId>rest-assured</artifactId>
-<version>4.4.0</version>
-<scope>test</scope>
-</dependency>
-<dependency>
-<groupId>org.dbunit</groupId>
-<artifactId>dbunit</artifactId>
-<version>2.7.0</version>
-</dependency>
-</dependencies>
-<build>
-<plugins>
-<plugin>
-<groupId>org.springframework.boot</groupId>
-<artifactId>spring-boot-maven-plugin</artifactId>
-<configuration>
-<finalName>${project.artifactId}</finalName>
-<outputDirectory>../package</outputDirectory>
-</configuration>
-</plugin>
-<plugin>
-<groupId>org.apache.maven.plugins</groupId>
-<artifactId>maven-compiler-plugin</artifactId>
-<configuration>
-<source>8</source>
-<target>8</target>
-</configuration>
-</plugin>
-</plugins>
-</build>
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.4.12</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>api</artifactId>
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.25</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.vorburger.mariaDB4j</groupId>
+            <artifactId>mariaDB4j</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>4.4.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dbunit</groupId>
+            <artifactId>dbunit</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <finalName>${project.artifactId}</finalName>
+                    <outputDirectory>../package</outputDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
 ```
 
 源码下面的包中实现了 2 个简单的 API，便于管理员添加和列出用户：
 
-```
+```java
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-@Autowired
-UserService userService;
+    @Autowired
+    UserService userService;
 
-@GetMapping("")
-public ResponseEntity<List<User>> getAll() {
-return ResponseEntity.ok(userService.listAll());
-}
+    @GetMapping("")
+    public ResponseEntity<List<User>> getAll() {
+        return ResponseEntity.ok(userService.listAll());
+    }
 
-@PostMapping("")
-public ResponseEntity addUser(@RequestBody AddUserRequest
-addUserRequest) {
-User savedUser = userService.add(addUserRequest);
-return ResponseEntity.created(
-URI.create("/api/users/" + savedUser.getId())
-).build();
-}
+    @PostMapping("")
+    public ResponseEntity addUser(@RequestBody AddUserRequest addUserRequest) {
+        User savedUser = userService.add(addUserRequest);
+        return ResponseEntity.created(
+                URI.create("/api/users/" + savedUser.getId())
+        ).build();
+    }
 }
 ```
 
 在测试目录中，有一个 TestBase
 ，是为所有测试类的基类，用于初始化测试上下文。示例代码如下：
 
-```
-@SpringBootTest(webEnvironment = RANDOM_PORT, classes =
-{Application.class})
+```java
+@SpringBootTest(webEnvironment = RANDOM_PORT, classes = {Application.class})
 @TestExecutionListeners({
-DependencyInjectionTestExecutionListener.class,
-ResetDbListener.class,
+        DependencyInjectionTestExecutionListener.class,
+        ResetDbListener.class,
 })
 public abstract class TestBase {
 
-@LocalServerPort
-private int port;
+    @LocalServerPort
+    private int port;
+  
+    @BeforeEach
+    public void setUp() {
+        System.out.println("port:" + port);
 
-@BeforeEach
-public void setUp() {
-System.out.println("port:" + port);
-
-RestAssured.port = port;
-RestAssured.basePath = "/api/";
-RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-}
+        RestAssured.port = port;
+        RestAssured.basePath = "/api/";
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    }
 }
 ```
 
@@ -404,27 +395,26 @@ RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
 下面定义一个ResetDbListener，用来暂存和恢复数据库的状态：
 
-```
+```java
 public class ResetDbListener extends AbstractTestExecutionListener {
-@Override
-public int getOrder() {
-return 0;
-}
+    @Override
+    public int getOrder() {
+        return 0;
+    }
 
-@Override
-public void beforeTestMethod(TestContext testContext) throws Exception
-{
-ResetDbService resetDbService =
-testContext.getApplicationContext().getBean(ResetDbService.class);
-resetDbService.backup();
-}
+    @Override
+    public void beforeTestMethod(TestContext testContext) throws Exception {
+        ResetDbService resetDbService =
+                testContext.getApplicationContext().getBean(ResetDbService.class);
+        resetDbService.backup();
+    }
 
-@Override
-public void afterTestMethod(TestContext testContext) throws Exception {
-ResetDbService resetDbService =
-testContext.getApplicationContext().getBean(ResetDbService.class);
-resetDbService.rollback();
-}
+    @Override
+    public void afterTestMethod(TestContext testContext) throws Exception {
+        ResetDbService resetDbService =
+                testContext.getApplicationContext().getBean(ResetDbService.class);
+        resetDbService.rollback();
+    }
 }
 ```
 
@@ -432,34 +422,31 @@ resetDbService.rollback();
 
 接下来就可以创建测试了，在UserController对应的测试目录下创建两个测试，让它们分别对应列出用户和添加用户这两个操作。示例代码如下：
 
-```
-
+```java
 class UserControllerTest extends TestBase {
-@Test
-void should_list_all_users() {
-given()
-.contentType("application/json")
-.when()
-.get("/users")
-.then().statusCode(200);
-
+    @Test
+    void should_list_all_users() {
+        given()
+                .contentType("application/json")
+                .when()
+                .get("/users")
+                .then().statusCode(200);    
 }
 
-@Test
-void should_add_user() {
-given()
-.contentType("application/json")
-.body(Maps.of(
-"name", "test-user",
-"email", "test@email.com",
-"password", "123456"
-))
-.when()
-.post("/users")
-.then().statusCode(201);
+    @Test
+    void should_add_user() {
+        given()
+                .contentType("application/json")
+                .body(Maps.of(
+                        "name", "test-user",
+                        "email", "test@email.com",
+                        "password", "123456"
+                ))
+                .when()
+                .post("/users")
+                .then().statusCode(201);
+    }
 }
-}
-
 ```
 
 这是两个最基本的测试，由于只是演示，我们没有编写更多的测试用例。在这两个测试中，状态码的断言比较简单，例如在第二个测试中，验证了最终返回的是201状态码。但是，对返回值的断言稍显复杂，后面会专门讨论如何实现复杂的断言。
@@ -488,13 +475,12 @@ when方法与given方法所做的事情一样，只是它的语法更符合BDD�
 
 下面是一个获取返回结果的示例，这里基于从列表接口获得的数据进行断言：
 
-```
-String body = given()
-.contentType("application/json")
-.when()
-.get("/users").getBody().print();
-Assertions.assertEquals("[{"id":"admin-id","name":"admin","role":"ADMIN","email":"admin@test.com","password":"$2a$10$Q9xt3B2Ixe0tGnbCjVWAbunD4lYdf5PpMSYGyLNrD4S38FGUt4NMC","createdAt":"2020-12-16T21:45:41.147Z","updatedAt":"2020-12-16T21:45:41.147Z"}]",
-body);
+```java
+String body =  given()
+         .contentType("application/json")
+         .when()
+         .get("/users").getBody().print();
+ Assertions.assertEquals("[{"id":"admin-id","name":"admin","role":"ADMIN","email":"admin@test.com","password":"$2a$10$Q9xt3B2Ixe0tGnbCjVWAbunD4lYdf5PpMSYGyLNrD4S38FGUt4NMC","createdAt":"2020-12-16T21:45:41.147Z","updatedAt":"2020-12-16T21:45:41.147Z"}]", body);
 ```
 
 但是如果要进一步对结果中的属性进行断言，需要先使用JSON解析库将字符串解析为Java对象，然后再对解析后的对象属性进行断言。如此一来，依赖代码就是冗长的。虽然ValidatableResponseOptions提供了直接在调用链上断言的方法，比如在then方法后面调用statusCode(201)
@@ -510,34 +496,33 @@ body);
 由于越来越多的应用都开始使用RESTful API（RESTful
 API的数据格式为JSON），因此可以使用一种表达式（JsonPath）来进行断言。这里为了演示JsonPath的使用，将用户列表的接口修改为Page类型了，这样可以让返回结果变得更复杂一些。示例代码如下：
 
-```
+```java
 // UserController
 @GetMapping("")
 public ResponseEntity<Page<User>> getAll() {
-return ResponseEntity.ok(userService.listAll());
+  return ResponseEntity.ok(userService.listAll());
 }
-
 // UserService
 public Page<User> listAll() {
-return userRepository.findAll();
+    return userRepository.findAll();
 }
 ```
 
 这时返回的数据结构会带上分页信息，相对复杂了一些，具体如下：
 
-```
+```java
 {
-"content": [
-{
-"id": "admin-id",
-...
-}
-],
-"totalPages": 1,
-"totalElements": 1,
-"size": 15,
-"number": 0,
-"numberOfElements": 1
+    "content": [
+        {
+            "id": "admin-id",
+            ...
+        }
+    ],
+    "totalPages": 1,
+    "totalElements": 1,
+    "size": 15,
+    "number": 0,
+    "numberOfElements": 1
 }
 ```
 
@@ -566,7 +551,7 @@ Assured提供的body方法可接收一个JsonPath和一个Matcher。大部分情
 | ..                                                           | 深度匹配，跨多层级匹配             |
 | .<name>                                                      | 子属性匹配                         |
 | ['<name>' (, '<name>')]                                      | 一般用于匹配对象的多个属性         |
-| [<number> (, <number>)]  \| 根据数组索引访问          \| \|[start:end]` | 对数组切片访问                     |
+| [<number> (, <number>)]  | 根据数组索引访问          | |[start:end]` | 对数组切片访问                     |
 
 6.4 鉴权的处理
 --------------
@@ -587,26 +572,26 @@ Authorization头信息中。
 例如，用户名"admin"，口令"123456"，使用"："拼接并编码后变为YWRtaW46
 MTIzNDU2。在HTTP包中发送的数据如下：
 
-```
+```java
 Authorization: Basic YWRtaW46MTIzNDU2
 ```
 
 可以手动使用 header 来完成鉴权：
 
-```
+```java
 given().header("Authorization", "Basic YWRtaW46MTIzNDU2")
 ```
 
 也可以使用快捷方法：
 
-```
+```java
 given().auth().basic("admin", "123456")
 ```
 
 如果需要全局增加鉴权，可以直接使用
 RestAssured类的全局属性，不过这会降低灵活性。示例代码如下：
 
-```
+```java
 RestAssured.authentication = basic("admin", "123456");
 ```
 
@@ -615,7 +600,7 @@ RestAssured.authentication = basic("admin", "123456");
 Token
 鉴权是最灵活的方式，与Basic鉴权类似，都是在HTTP请求的头部传人认证信息。一般使用Token鉴权时都会使用Bearer前缀，示例代码如下：
 
-```
+```java
 Authorization: Bearer a1e1eb29-2733-4ce3-b2cc-4569df7fdf0e
 ```
 
@@ -625,28 +610,26 @@ token这两种Token。
 
 使用Token鉴权时，可以在测试中提前准备一个Token，并在每个测试中复用。这里因为是在同一个项目中编写的测试用例，所以会在测试中直接使用源代码中的方法，这样更方便。示例代码如下：
 
-```
-
+```java
 @Autowired
 private AuthorizeService authorizeService;
 private String token;
 
-...
+...  
 
 @BeforeEach
-public void setup() {
-// 调用父类的初始化方法
-super.setup();
-// 设置一个默认测试用户
-...
-this.token = authorizeService.login(User user);
+public void setup() {  
+    // 调用父类的初始化方法  
+    super.setup();  
+    // 设置一个默认测试用户  
+    ...   
+    this.token = authorizeService.login(User user);
 }
 
 @Test
-public void test() {
-given().contentType("application/json").header("Authorization","Bearer
-" + token);
-...
+public void test() {    
+    given().contentType("application/json").header("Authorization","Bearer " + token);
+    ...
 }
 ```
 
@@ -660,35 +643,32 @@ ID，只要用户每次请求都带上这个ID，服务器就能识别。
 
 我们可以在登录后抽取出Cookie，然后在下次请求时带上，示例代码如下：
 
-```
-
+```java
 // 1. 登录并留存 Cookies
 Map<String, String> cookies = given()
-.contentType("application/json")
-.body(Maps.of("email", "test@email.com", "password",
-"123456"))
-.when().post("/authorizes")
-.then().statusCode(201).extract().cookies();
+  .contentType("application/json")
+  .body(Maps.of("email", "test@email.com", "password", "123456"))
+  .when().post("/authorizes")
+  .then().statusCode(201).extract().cookies();
 
 // 2. 使用 cookies 获取用户个人信息
 given()
-.contentType("application/json")
-.cookies(cookies)
-.when().post("/authorizes/me")
-.then().statusCode(200);
+  .contentType("application/json")
+  .cookies(cookies)
+  .when().post("/authorizes/me")
+  .then().statusCode(200);
 ```
 
 RESTAssured在2.0.0版本之后提供了一个快捷方式，即可以使用SessionFilter来保持会话，示例代码如下：
 
-```
+```java
 SessionFilter sessionFilter = new SessionFilter();
 given()
-.contentType("application/json")
-.filter(sessionFilter)
-.body(Maps.of("email", "test@email.com", "password",
-"123456"))
-.when().post("/authorizes")
-.then().statusCode(201);
+  .contentType("application/json")
+  .filter(sessionFilter)
+  .body(Maps.of("email", "test@email.com", "password", "123456"))
+  .when().post("/authorizes")
+  .then().statusCode(201);
 ```
 
 当然，还有一种方法是在测试中关闭鉴权，不过这会让测试的价值降低，因此并不推荐。
@@ -700,40 +680,38 @@ given()
 
 假设在测试资源目录中有一个文件用于测试，其文件地址为"classpath:file/test.pdf"。第一种读取文件的方法是使用ClassLoader。这时可以直接使用类加载器来加载相应的文件。示例代码如下：
 
-```
+```java
 ClassLoader classLoader = getClass().getClassLoader();
-File file = new
-File(classLoader.getResource("file/test.pdf").getFile());
+File file = new File(classLoader.getResource("file/test.pdf").getFile());
 ```
 
 第二种方法是使用Google的Guava。如果项目中引入了Google的Guava，那么可以使用Resources工具类来实现文件的加载，非常方便。示例代码如下：
 
-```
+```java
 Resources.getResource("file/test.pdf").getFile();
 ```
 
 如果是文本文件，还可以使用Resources.toString来读取文本的内容。示例代码如下：
 
-```
+```java
 Resources.toString(Resources.getResource("file/test.txt"));
 ```
 
 获取文件或者文件内容后，可以将其用于后续的测试，在given方法后可以使用multiPart
 方法来构建表单中的文件数据。示例代码如下：
 
-```
+```java
 given()
-.multiPart(Resources.getResource("file/test.pdf").getFile())
-.when().post("/upload");
+  .multiPart(Resources.getResource("file/test.pdf").getFile())
+  .when().post("/upload");
 ```
 
 不过采用这种写法时，默认文件表单控件的name属性为"file"，某些API会自定义name属性需要注意增加相应的参数。示例代码如下：
 
-```
+```java
 given()
-.multiPart("custom_file_name",
-Resources.getResource("file/test.pdf").getFile())
-.when().post("/upload");
+  .multiPart("custom_file_name", Resources.getResource("file/test.pdf").getFile())
+  .when().post("/upload");
 ```
 
 6.6 模拟第三方 API
@@ -750,21 +728,19 @@ Resources.getResource("file/test.pdf").getFile())
 
 xkcd.com是一个程序员四格漫画网站，我在https://any-api.com中发现了它的API。这个看上去极其简单的API可用来发布一些漫画信息，下面就用它来演示API模拟的方法。API的地址为https://xkcd.com/info.0.json。访问此地址，可得到JSON格式的返回值：
 
-```
-
+```json
 {
-"month": "6",
-"num": 2472,
-"link": "",
-"year": "2021",
-"news": "",
-"safe_title": "Fuzzy Blob",
-"transcript": "",
-"alt": "If there's no dome, how do you explain the irregularities
-the board discovered in the zoning permits issued in that area!?",
-"img": "https://imgs.xkcd.com/comics/fuzzy_blob.png",
-"title": "Fuzzy Blob",
-"day": "4"
+  "month": "6",
+  "num": 2472,
+  "link": "",
+  "year": "2021",
+  "news": "",
+  "safe_title": "Fuzzy Blob",
+  "transcript": "",
+  "alt": "If there's no dome, how do you explain the irregularities the board discovered in the zoning permits issued in that area!?",
+  "img": "https://imgs.xkcd.com/comics/fuzzy_blob.png",
+  "title": "Fuzzy Blob",
+  "day": "4"
 }
 ```
 
@@ -783,52 +759,49 @@ Controller类会调用XkcdClient，并返回DailyComic-Response
 对象，这个对象目前只有一个imageLink
 属性，从API中返回的对应字段为img。示例代码如下：
 
-```
+```java
 @RestController
 @RequestMapping("/api/daily-comic")
 public class DailyComicController {
-@Autowired
-private XkcdClient xkcdClient;
+    @Autowired
+    private XkcdClient xkcdClient;
 
-@GetMapping("")
-public ResponseEntity<DailyComicResponse> getCurrentComic() {
-XkcdVO xkcdVO = xkcdClient.getXkcdResponse();
-return
-ResponseEntity.ok(DailyComicResponse.builder().imageLink(xkcdVO.getImg()).build());
-}
+    @GetMapping("")
+    public ResponseEntity<DailyComicResponse> getCurrentComic() {
+        XkcdVO xkcdVO = xkcdClient.getXkcdResponse();
+        return ResponseEntity.ok(DailyComicResponse.builder().imageLink(xkcdVO.getImg()).build());
+    }
 }
 ```
 
 XkcdClient类使用RestTemplate的getForObject方法来获取远程API的数据。Spring
 框架已经帮我们封装好了HTTP客户端，我们只需要定义一下RestTemplate的Bean。示例代码如下：
 
-```
+```java
 @Service
 public class XkcdClient {
-@Autowired
-private RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
 
-public XkcdVO getXkcdResponse() {
-return restTemplate.getForObject("https://xkcd.com/info.0.json",
-XkcdVO.class);
-}
+    public XkcdVO getXkcdResponse() {
+        return restTemplate.getForObject("https://xkcd.com/info.0.json", XkcdVO.class);
+    }
 }
 ```
 
 下面来编写一个测试，验证这个接口是否能返回需要的内容：
 
-```
+```java
 class DailyComicControllerTest extends TestBase {
-@Test
-void get_current_comic() {
-given()
-.contentType("application/json")
-.when()
-.get("/daily-comic")
-.then().statusCode(200)
-.body("imageLink",
-is("https://imgs.xkcd.com/comics/fuzzy_blob.png"));
-}
+    @Test
+    void get_current_comic() {
+        given()
+                .contentType("application/json")
+                .when()
+                .get("/daily-comic")
+                .then().statusCode(200)
+                .body("imageLink", is("https://imgs.xkcd.com/comics/fuzzy_blob.png"));
+    }
 }
 ```
 
@@ -840,34 +813,31 @@ is("https://imgs.xkcd.com/comics/fuzzy_blob.png"));
 
 接下来模拟XkcdClient的Bean，首先在TestBase中添加如下代码，实现对Bean的模拟，这部分在前面章节已经讲过。
 
-```
+```java
 @MockBean
 private XkcdClient xkcdClient;
 ```
 
 然后在测试中使用@Autowired获得这个模拟对象，并给予特定的返回值。这里需要注意的是，@MockBean必须先在TestBase类中定义好，然后再使用@Autowired。下面就是完整的带有Mock的测试。
 
-```
-
+```java
 class DailyComicControllerTest extends TestBase {
-@Autowired
-private XkcdClient xkcdClient;
+    @Autowired
+    private XkcdClient xkcdClient;
 
-@Test
-void get_current_comic() {
-BDDMockito.given(xkcdClient.getXkcdResponse()).willReturn(new XkcdVO()
-{{
-setImg("https://imgs.xkcd.com/comics/fuzzy_blob.png");
-}});
+    @Test
+    void get_current_comic() {
+        BDDMockito.given(xkcdClient.getXkcdResponse()).willReturn(new XkcdVO() {{
+            setImg("https://imgs.xkcd.com/comics/fuzzy_blob.png");
+        }});
 
-given()
-.contentType("application/json")
-.when()
-.get("/daily-comic")
-.then().statusCode(200)
-.body("imageLink",
-is("https://imgs.xkcd.com/comics/fuzzy_blob.png"));
-}
+        given()
+                .contentType("application/json")
+                .when()
+                .get("/daily-comic")
+                .then().statusCode(200)
+                .body("imageLink", is("https://imgs.xkcd.com/comics/fuzzy_blob.png"));
+    }
 }
 ```
 
@@ -894,7 +864,7 @@ API测试，刚好WireMock构建于JVM平台之上，它可以单独启动，也
 
 启动的命令如下：
 
-```
+```shell
 java -jar wiremock-jre8-standalone-2.28.0.jar
 ```
 
@@ -928,18 +898,15 @@ java -jar wiremock-jre8-standalone-2.28.0.jar
 这里还是以xkcd.com的访问值为例进行说明，我们不使用任何参数启动WireMock，而是通过API动态地添加Mock数据。为了减少代码，只输出一个"Hello
 World"。服务启动后，组织下面的API请求。
 
-```
-curl -X POST 
---data '{ "request": { "url": "/info.0.json", "method":
-"GET" }, "response": { "status": 200, "body":
-"{"hello":"world"}" }}' 
+```shell
+curl -X POST --data '{ "request": { "url": "/info.0.json", "method":"GET" }, "response": {"status": 200, "body":"{"hello":"world"}" }}' 
 http://localhost:8080/__admin/mappings/new
 ```
 
 其中，/_admin/mappings/new
 API是WireMock的管理API，可以使用它设置特定的模拟内容。我们来看一下设置是否成功：
 
-```
+```shell
 curl http://localhost:8080/info.0.json
 
 {"hello":"world"}
@@ -960,21 +927,16 @@ mappings中不能像 __files
 
 在mappings目录的info.0.json中放入下面的文件内容，注意body方法接收的还是String类型，因此需要转义为JSON的内容。
 
-```
+```json
 {
-"request": {
-"method": "GET",
-"url": "/info.0.json"
-},
-"response": {
-"status": 200,
-"body":"{"month":"6","num":2472,"link":"","year":"2021","news":"","safe_title":"Fuzzy
-Blob","transcript":"","alt":"If there's no
-dome, how do you explain the irregularities the board discovered in the
-zoning permits issued in that
-area!?","img":"https://imgs.xkcd.com/comics/fuzzy_blob.png","title":"Fuzzy
-Blob","day":"4"}"
-}
+    "request": {
+        "method": "GET",
+        "url": "/info.0.json"
+    },
+    "response": {
+        "status": 200,
+      "body":"{"month":"6","num":2472,"link":"","year":"2021","news":"","safe_title":"Fuzzy Blob","transcript":"","alt":"If there's no dome, how do you explain the irregularities the board discovered in the zoning permits issued in that area!?","img":"https://imgs.xkcd.com/comics/fuzzy_blob.png","title":"Fuzzy Blob","day":"4"}"
+    }
 }
 ```
 
@@ -990,33 +952,30 @@ WireMock 在测试中动态地模拟第三方服务。
 下面创建一个测试类，直接启动WireMockServer即可，这与前面介绍的RedisServer
 类似，都是需要启动一个实例。
 
-```
-
+```java
 public class UserMockServerTest extends TestBase {
-private WireMockServer wireMockServer;
+    private WireMockServer wireMockServer;
 
-@Autowired
-RestTemplate restTemplate;
+    @Autowired
+    RestTemplate restTemplate;
 
-@BeforeEach
-public void setUp() {
-super.setUp();
-wireMockServer = new WireMockServer(options().port(9090));
-wireMockServer.start();
-}
+    @BeforeEach
+    public void setUp() {
+        super.setUp();
+        wireMockServer = new WireMockServer(options().port(9090));
+        wireMockServer.start();
+    }
 
-@AfterEach
-void tearDown() {
-wireMockServer.stop();
-}
+    @AfterEach
+    void tearDown() {
+        wireMockServer.stop();
+    }
 
-@Test
-void test_mock_server() {
-String response =
-restTemplate.getForObject("http://localhost:9090/users",
-String.class);
-System.out.println(response);
-}
+    @Test
+    void test_mock_server() {
+        String response = restTemplate.getForObject("http://localhost:9090/users", String.class);
+        System.out.println(response);
+    }
 }
 ```
 
@@ -1024,12 +983,12 @@ System.out.println(response);
 
 接下来，编写一个最基本的动态模拟代码，并说明对应方法的用途。
 
-```
+```java
 configureFor("localhost", 9090);
 stubFor(get(urlEqualTo("/users"))
-.willReturn(aResponse()
-.withHeader("Content-Type", "text/json")
-.withBody("{"name":"john"}")));
+        .willReturn(aResponse()
+                .withHeader("Content-Type", "text/json")
+                .withBody("{"name":"john"}")));
 ```
 
 configureFor(String host, int port)
@@ -1043,71 +1002,65 @@ client.WireMock
 
 添加以上的方法后，再次运行测试。顺利的话，测试会通过并打印出需要返回的数据内容。上面通过Java语言描述的模拟数据等价于下面的JSON文件：
 
-```
+```json
 {
-"request": {
-"method": "GET",
-"url": "/users"
-},
-"response": {
-"status": 200,
-"body": "{"name":"john"}",
-"headers": {
-"Content-Type": "text/json"
-}
-}
+    "request": {
+        "method": "GET",
+        "url": "/users"
+    },
+    "response": {
+        "status": 200,
+        "body": "{\"name\":\"john\"}",
+        "headers": {
+            "Content-Type": "text/json"
+        }
+    }
 }
 ```
 
 WireMock类中提供了非常多的Builder方法，这样就可以更加灵活地构建模拟API，这对于构建一些异常返回特别有用。比如，我们可以省略urlEqualTo方法，直接使用okJson方法构建JSON的返回内容。示例代码如下：
 
-```
+```java
 @Test
 void test_mock_json() {
-configureFor("localhost", 9090);
-stubFor(get("/users")
-.willReturn(okJson("{"name":"john"}")));
+    configureFor("localhost", 9090);
+    stubFor(get("/users")
+            .willReturn(okJson("{\"name\":\"john\"}")));
 
-String response =
-restTemplate.getForObject("http://localhost:9090/users",
-String.class);
-Assertions.assertEquals("{"name":"john"}", response);
+    String response = restTemplate.getForObject("http://localhost:9090/users", String.class);
+    Assertions.assertEquals("{\"name\":\"john\"}", response);
 }
 ```
 
 当测试服务异常时，也可以使用unauthorized、forbidden、notFound等方法构建异常返回。示例代码如下：
 
-```
+```java
 @Test
 void mock_status() {
-configureFor("localhost", 9090);
-stubFor(get("/limited-resources")
-.willReturn(unauthorized()));
+    configureFor("localhost", 9090);
+    stubFor(get("/limited-resources")
+            .willReturn(unauthorized()));
 
-Assertions.assertThrows(HttpClientErrorException.Unauthorized.class, ()
--> {
-restTemplate.getForEntity("http://localhost:9090/limited-resources",
-String.class);
-});
+    Assertions.assertThrows(HttpClientErrorException.Unauthorized.class, () -> {
+        restTemplate.getForEntity("http://localhost:9090/limited-resources", String.class);
+    });
 }
 ```
 
 还可以使用temporaryRedirect构建跳转方法，比如测试302、301跳转。默认的RestTemplate
 开启了自动获取跳转后的数据的功能，这里为了演示方便，断言了跳转到/redirect-to后的返回值。示例代码如下：
 
-```
+```java
 @Test
 void mock_redirect() {
-configureFor("localhost", 9090);
-stubFor(get("/redirect-to")
-.willReturn(ok("new-url")));
-stubFor(get("/redirect")
-.willReturn(temporaryRedirect("/redirect-to")));
+    configureFor("localhost", 9090);
+    stubFor(get("/redirect-to")
+            .willReturn(ok("new-url")));
+    stubFor(get("/redirect")
+            .willReturn(temporaryRedirect("/redirect-to")));
 
-String response =
-restTemplate.getForObject("http://localhost:9090/redirect-to",
-String.class);
-Assertions.assertEquals(response, "new-url");
+    String response = restTemplate.getForObject("http://localhost:9090/redirect-to", String.class);
+    Assertions.assertEquals(response, "new-url");
 }
 ```
 
@@ -1115,17 +1068,17 @@ Assertions.assertEquals(response, "new-url");
 的自动跳转（也可以使用前面介绍的TestRestTemplate）后，可以使用getForEntity
 获取返回的HTTP包实体，并获取真实的状态码。示例代码如下：
 
-```
+```java
 @Bean
 public RestTemplate restTemplate () {
-RestTemplate restTemplate = new RestTemplate();
-final HttpComponentsClientHttpRequestFactory factory =
-new HttpComponentsClientHttpRequestFactory();
-CloseableHttpClient build =
-HttpClientBuilder.create().disableRedirectHandling().build();
-factory.setHttpClient(build);
-restTemplate.setRequestFactory(factory);
-return restTemplate;
+    RestTemplate restTemplate = new RestTemplate();
+    final HttpComponentsClientHttpRequestFactory factory =
+            new HttpComponentsClientHttpRequestFactory();
+    CloseableHttpClient build =
+            HttpClientBuilder.create().disableRedirectHandling().build();
+    factory.setHttpClient(build);
+    restTemplate.setRequestFactory(factory);
+    return restTemplate;
 }
 ```
 
@@ -1138,25 +1091,23 @@ WireMock实例在启动后会记录所有的测试请求，并且在重置之前
 通过内嵌启动的WireMock服务使用Java
 API来实现对API的验证就比较简单，只需要调用verify方法即可：
 
-```
+```java
 @Test
 void verify_mock_server() {
-// 准备 Mock 数据
-configureFor("localhost", 9090);
-stubFor(get(urlEqualTo("/users"))
-.willReturn(aResponse()
-.withHeader("Content-Type", "text/json")
-.withBody("{"name":"john"}")));
+    // 准备 Mock 数据
+    configureFor("localhost", 9090);
+    stubFor(get(urlEqualTo("/users"))
+            .willReturn(aResponse()
+                    .withHeader("Content-Type", "text/json")
+                    .withBody("{\"name\":\"john\"}")));
 
-// 调用被测试内容
-String response =
-restTemplate.getForObject("http://localhost:9090/users",
-String.class);
-System.out.println(response);
+    // 调用被测试内容
+    String response = restTemplate.getForObject("http://localhost:9090/users", String.class);
+    System.out.println(response);
 
-// 验证被依赖 API 是否被调用
-verify(getRequestedFor(urlEqualTo("/users"))
-.withHeader("Content-Type", equalTo("text/json")));
+    // 验证被依赖 API 是否被调用
+    verify(getRequestedFor(urlEqualTo("/users"))
+            .withHeader("Content-Type", equalTo("text/json")));
 }
 ```
 
@@ -1174,7 +1125,7 @@ Mock数据时非常相似。verify方法没有别的参数时，会验证匹配�
 
 当然，与Mockito类似，verify方法除了默认执行至少一次的校验外，还提供了多种验证操作：
 
-```
+```java
 verify(lessThan(5), postRequestedFor(urlEqualTo("/many")));
 verify(lessThanOrExactly(5), postRequestedFor(urlEqualTo("/many")));
 verify(exactly(5), postRequestedFor(urlEqualTo("/many")));
@@ -1186,66 +1137,61 @@ verify(moreThan(5), postRequestedFor(urlEqualTo("/many")));
 
 我们知道JUnit4提供了Rule，WireMock也提供了一个WireMockRule来集成原生的API。回顾之前介绍的Rule，我们知道，Rule是JUnit的一种拓展方式，可以让测试更为灵活，它能起到类似插件的作用。Rule最基本的使用方式就是@Rule注解在测试类中声明。示例代码如下：
 
-```
+```java
 @Rule
 public WireMockRule wireMockRule = new WireMockRule();
 ```
 
 也可以增加一些参数：
 
-```
+```java
 @Rule
-public WireMockRule wireMockRule = new
-WireMockRule(options().port(8888).httpsPort(8889));
+public WireMockRule wireMockRule = new WireMockRule(options().port(8888).httpsPort(8889));
 ```
 
 但是，我们的例子现在已经升级到了JUnit5版本，在Junit5中使用Extension代替了Rule，让拓展的编写更容易理解。这里使用WireMock的原生API编写一个JUnit
 5的Extension。编写Extension的方法比较简单，因为我们可以直接使用WireMockServer对象作为父类，然后实现相应的接口。
 
-```
+```java
+public class WireMockExtension extends WireMockServer implements BeforeEachCallback, AfterEachCallback {
+    public WireMockExtension() {
+    }
 
-public class WireMockExtension extends WireMockServer implements
-BeforeEachCallback, AfterEachCallback {
-public WireMockExtension() {
-}
+    @Override
+    public void afterEach(ExtensionContext context) {
+        stop();
+        resetAll();
+    }
 
-@Override
-public void afterEach(ExtensionContext context) {
-stop();
-resetAll();
+    @Override
+    public void beforeEach(ExtensionContext context) {
+        start();
+    }
 }
-
-@Override
-public void beforeEach(ExtensionContext context) {
-start();
-}
-}
-
 ```
 
 一个极其简单的Extension就开发完成了，使用@RegisterExtension可以注人Extension
 代替每次手动编写的start、stop方法。示例代码如下：
 
-```
+```java
 public class WireMockExtensionTest extends TestBase {
-@RegisterExtension
-WireMockExtension wireMock = new WireMockExtension();
-
+    @RegisterExtension
+    WireMockExtension wireMock = new WireMockExtension();
 ...
-}
+    }
 }
 ```
 
 WireMockServer提供了根据参数构建模拟服务的方法，在Extension中也可以提供相应的方法。示例代码如下：
 
-```
+```java
 // 根据配置构建 WireMockServer
 public WireMockExtension(Options options) {
-super(options);
+    super(options);
 }
 // 根据端口构建 WireMockServer
 public WireMockExtension(int port, Integer httpsPort) {
-super(port, httpsPort);
+    super(port, httpsPort);
 }
 ```
 
@@ -1294,37 +1240,37 @@ API进行测试时，目标是测试API的业务场景，验证字段是否正�
 
 第一种是通过类的方式来组织、然后在类的级别中设置通用的Mock行为，并通过设置测试方法的运行序列整体运行测试。在JUnit5中，可以使用@Order注解让测试顺序执行。示例代码如下：
 
-```
+```java
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BuyScenarioTest {
-@BeforeAll
-static void beforeAll() {
-// 这里进行通用的准备
-}
+    @BeforeAll
+    static void beforeAll() {
+        // 这里进行通用的准备
+    }
 
-@AfterAll
-static void afterAll() {
-// 这里进行通用的清理
-}
+    @AfterAll
+    static void afterAll() {
+        // 这里进行通用的清理
+    }
 
-@Test
-@Order(1)
-void should_list_products() {
-System.out.println("should_list_products");
-}
+    @Test
+    @Order(1)
+    void should_list_products() {
+        System.out.println("should_list_products");
+    }
 
-@Test
-@Order(2)
-void should_get_product_detail() {
-System.out.println("should_get_product_detail");
-}
+    @Test
+    @Order(2)
+    void should_get_product_detail() {
+        System.out.println("should_get_product_detail");
+    }
 
-@Test
-@Order(3)
-void should_add_product_to_shopping_cart() {
-System.out.println("should_add_product_to_shopping_cart");
-}
-...
+    @Test
+    @Order(3)
+    void should_add_product_to_shopping_cart() {
+        System.out.println("should_add_product_to_shopping_cart");
+    }
+    ...
 }
 ```
 
@@ -1332,26 +1278,26 @@ System.out.println("should_add_product_to_shopping_cart");
 
 但习惯了采用这种方式组织测试之后，很多开发者会对那些无意义的@Order注解感到厌烦------------既然我们是使用场景组织API测试的，何不就以一个场景作为单位划分测试呢？这就是第二种风格，直接以场景为粒度进行测试，使用一个测试编排多个测试方法。在其他的BDD测试框架中，对此是有专门的语法来支持的。示例代码如下：
 
-```
+```java
 public class ScenarioTest {
-@Test
-void buy_scenario_test() {
-// 这里进行通用的准备
-shouldListProducts();
-shouldGetProductDetail();
-shouldAddProductToShoppingCart();
-...
-// 这里进行通用的清理
-}
-void shouldListProducts() {
-System.out.println("should_list_products");
-}
-void shouldGetProductDetail() {
-System.out.println("should_get_product_detail");
-}
-void shouldAddProductToShoppingCart() {
-System.out.println("should_add_product_to_shopping_cart");
-}
+    @Test
+    void buy_scenario_test() {
+        // 这里进行通用的准备
+        shouldListProducts();
+        shouldGetProductDetail();
+        shouldAddProductToShoppingCart();
+        ...
+        // 这里进行通用的清理
+    }
+    void shouldListProducts() {
+        System.out.println("should_list_products");
+    }
+    void shouldGetProductDetail() {
+        System.out.println("should_get_product_detail");
+    }
+    void shouldAddProductToShoppingCart() {
+        System.out.println("should_add_product_to_shopping_cart");
+    }
 }
 ```
 
@@ -1378,33 +1324,32 @@ API的业务能力，包括单元测试不能覆盖的异常行为。
 
 由于面向领域服务的API提供的基本是原子性的API，因此其与单元测试的组织风格类似，即保持一个Controller对应一个测试类。若为每个API单独准备、执行、验证测试用例，那么一个测试类可能会有很多个测试。想让测试结构更加清晰，可以把正向、异常测试组织到一个嵌套测试中。示例代码如下：
 
-```
+```java
 public class ProductControllerTest {
-@Nested
-@DisplayName("query product list suite")
-class QueryProduct {
-@Test
-void should_list_product_list_with_default_page() {
-System.out.println("should_list_product_list_with_default_page");
-}
-@Test
-void should_list_product_list_with_specify_page() {
-System.out.println("should_list_product_list_with_specify_page");
-}
-}
-@Nested
-@DisplayName("add product test suite")
-class AddProduct {
-@Test
-void should_add_product_success() {
-System.out.println("should_add_product_success");
-}
-@Test
-void should_add_product_failed_when_exceed_product_limitation()
-{
-System.out.println("should_add_product_failed_when_exceed_product_limitation");
-}
-}
+    @Nested
+    @DisplayName("query product list suite")
+    class QueryProduct {
+        @Test
+        void should_list_product_list_with_default_page() {
+            System.out.println("should_list_product_list_with_default_page");
+        }
+        @Test
+        void should_list_product_list_with_specify_page() {
+            System.out.println("should_list_product_list_with_specify_page");
+        }
+    }
+    @Nested
+    @DisplayName("add product test suite")
+    class AddProduct {
+        @Test
+        void should_add_product_success() {
+            System.out.println("should_add_product_success");
+        }
+        @Test
+        void should_add_product_failed_when_exceed_product_limitation() {
+            System.out.println("should_add_product_failed_when_exceed_product_limitation");
+        }
+    }
 }
 ```
 
