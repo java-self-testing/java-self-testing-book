@@ -13,3 +13,12 @@
 - [第 5 章 Spring 应用的测试](./05-testing-with-spring)
 - [第 6 章 RESTful API 测试](./06-api-testing)
 
+参与贡献
+
+如果您发现内容有需要改进的地方，可以直接使用 "Edit on GitHub" 提交 Pull Request。由于时间仓促，可能出现的问题有：
+
+- 标点符号全角、半角问题
+- 英文单词没有合适的空格，导致排版效果受到影响
+
+其它问题可以联系作者微信：shaogefenhao，谢谢！
+
