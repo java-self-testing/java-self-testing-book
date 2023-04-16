@@ -4,7 +4,7 @@
 
 这本开源电子书整理了每个项目上都可能会用到的研发自测配置和技巧，以实用的角度说明如何进行单元测试、集成测试、API测试等内容，目前持续更新中，希望大家多提反馈，谢谢!
 
-当前更新章节：
+## 当前更新章节
 
 - [第 1 章 研发自测基础](./01-self-testing-fundamentals)
 - [第 2 章 代码评审](./02-code-review)
@@ -13,14 +13,18 @@
 - [第 5 章 Spring 应用的测试](./05-testing-with-spring)
 - [第 6 章 RESTful API 测试](./06-api-testing)
 
-参与贡献
+## 参与贡献
 
 如果您发现内容有需要改进的地方，可以直接使用 "Edit on GitHub" 提交 Pull Request。由于时间仓促，可能出现的问题有：
 
 - 标点符号全角、半角问题
 - 英文单词没有合适的空格，导致排版效果受到影响
 
-其它问题可以联系作者微信：shaogefenhao。觉得本文档有帮助，麻烦给 Github 仓库加一个 Star 谢谢！
+觉得本文档有帮助，麻烦给 Github 仓库加一个 Star 谢谢！
 
 Github 地址：[https://github.com/java-self-testing](https://github.com/java-self-testing)
 
+## 贡献者名单
+
+- 少个分号，主页：http://shaogefenhao.com/
+- linne，Github: https://github.com/weixiaobo88
