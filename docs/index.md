@@ -20,5 +20,7 @@
 - 标点符号全角、半角问题
 - 英文单词没有合适的空格，导致排版效果受到影响
 
-其它问题可以联系作者微信：shaogefenhao，谢谢！
+其它问题可以联系作者微信：shaogefenhao。觉得本文档有帮助，麻烦给 Github 仓库加一个 Star 谢谢！
+
+Github 地址：[https://github.com/java-self-testing](https://github.com/java-self-testing)
 
