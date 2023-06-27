@@ -598,7 +598,7 @@ RestAssured.authentication = basic("admin", "123456");
 ### 6.4.2 Token 鉴权
 
 Token
-鉴权是最灵活的方式，与 Basic 鉴权类似，都是在 HTTP 请求的头部传人认证信息。一般使用 Token 鉴权时都会使用 Bearer 前缀，示例代码如下：
+鉴权是最灵活的方式，与 Basic 鉴权类似，都是在 HTTP 请求的头部传入认证信息。一般使用 Token 鉴权时都会使用 Bearer 前缀，示例代码如下：
 
 ```java
 Authorization: Bearer a1e1eb29-2733-4ce3-b2cc-4569df7fdf0e
