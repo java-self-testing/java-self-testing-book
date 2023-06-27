@@ -690,6 +690,15 @@ Runner 是 JUnit 中比较高级的技术。另外一个第三方 JUnitParamsRun
 
 要使用 JUnitParamsRunner 需要通过 Maven 自行导入，示例如下：
 
+```xml
+<dependency>
+  <groupId>pl.pragmatists</groupId>
+  <artifactId>JUnitParams</artifactId>
+  <version>1.1.1</version>
+  <scope>test</scope>
+</dependency>
+```
+
 ```java
 @RunWith(JUnitParamsRunner.class)
 public class PersonTest {
