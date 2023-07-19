@@ -906,8 +906,8 @@ public void assert_same() {
 如果这个测试的运行时间超过了 timeout 允许的时间，JUnit 会中断测试线程，标记测试失败，并抛出异常。需要注意的是，如果测试代码无法被中断，JUnit 会启动另外一个线程来发出中断信号。示例代码如下：
 
 ```java
-@Test（timeout = 1000）
-public void test_with_timeout（）{
+@Test(timeout = 1000)
+public void test_with_timeout() {
 ... 
 }
 ```
